@@ -17,6 +17,53 @@ const Khipu = NativeModules.Khipu
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return Khipu.multiply(a, b);
+export function startOperation(
+  options: StartOperationOptions
+): Promise<KhipuResult> {
+  return Khipu.startOperation(options);
+}
+
+export interface StartOperationOptions {
+  operationId: string;
+  options: KhipuOptions;
+}
+
+export interface KhipuOptions {
+  locale: string | undefined;
+  title: string | undefined;
+  skipExitPage: boolean | undefined;
+  theme: 'light' | 'dark' | 'system' | undefined;
+  colors: KhipuColors | undefined;
+}
+
+export interface KhipuColors {
+  lightBackground: string | undefined;
+  lightOnBackground: string | undefined;
+  lightPrimary: string | undefined;
+  lightOnPrimary: string | undefined;
+  lightTopBarContainer: string | undefined;
+  lightOnTopBarContainer: string | undefined;
+  darkBackground: string | undefined;
+  darkOnBackground: string | undefined;
+  darkPrimary: string | undefined;
+  darkOnPrimary: string | undefined;
+  darkTopBarContainer: string | undefined;
+  darkOnTopBarContainer: string | undefined;
+}
+
+export interface KhipuResult {
+  operationId: string;
+  exitTitle: string;
+  exitMessage: string;
+  exitUrl: string;
+  result: 'OK' | 'ERROR' | 'WARNING' | 'CONTINUE';
+  failureReason: string | undefined;
+  continueUrl: string | undefined;
+  events: KhipuEvent[];
+}
+
+export interface KhipuEvent {
+  name: string;
+  timestamp: string;
+  type: string;
 }

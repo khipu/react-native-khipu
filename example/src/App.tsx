@@ -1,18 +1,49 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-khipu';
+import {
+  type KhipuColors,
+  type KhipuOptions,
+  type KhipuResult,
+  startOperation,
+} from 'react-native-khipu';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const [result, setResult] = React.useState<KhipuResult | undefined>();
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    startOperation({
+      operationId: 'hxet5stmvvoj',
+      options: {
+        title: 'Prueba prueba',
+        locale: 'es_CL',
+        theme: 'light',
+        skipExitPage: false,
+        colors: {
+          lightBackground: '#0000ff',
+          lightPrimary: '#ff00ff',
+          lightTopBarContainer: '#ffffff',
+          lightOnTopBarContainer: '#333333',
+        } as KhipuColors,
+      } as KhipuOptions,
+    }).then(setResult);
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Text>OperationId: {result?.operationId}</Text>
+      <Text>Result: {result?.result}</Text>
+      <Text>ExitTitle: {result?.exitTitle}</Text>
+      <Text>ExitMessage: {result?.exitMessage}</Text>
+      <Text>ExitUrl: {result?.exitUrl}</Text>
+      <Text>FailureReason: {result?.failureReason}</Text>
+      <Text>ContinueUrl: {result?.continueUrl}</Text>
+      <Text>
+        Events:
+        {result?.events.map((e) => {
+          return `${e.name} (${e.type}) : ${e.timestamp}`;
+        })}
+      </Text>
     </View>
   );
 }
