@@ -18,7 +18,7 @@ export default function App() {
         title: 'Prueba prueba',
         locale: 'es_CL',
         theme: 'light',
-        skipExitPage: false,
+        skipExitPage: true,
         colors: {
           lightBackground: '#0000ff',
           lightPrimary: '#ff00ff',

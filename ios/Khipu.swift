@@ -2,14 +2,11 @@ import KhipuClientIOS
 
 @objc(Khipu)
 class Khipu: NSObject {
-
     
     @objc(startOperation:withResolver:withRejecter:)
     func startOperation(startOperationOptions: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         
         var optionsBuilder = KhipuOptions.Builder()
-
-       
         
         if(startOperationOptions["options"] != nil) {
             
@@ -90,12 +87,12 @@ class Khipu: NSObject {
         
         DispatchQueue.main.async {
             guard let presenter = RCTPresentedViewController() else {
-                resolve("NONO")
+                reject("NO_AVAILABLE_VIEW", "There is no presented UIViewController", NSError())
                 return
             }
             
             guard let operationId = startOperationOptions["operationId"] else {
-                resolve("NONO")
+                reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
                 return
             }
         
