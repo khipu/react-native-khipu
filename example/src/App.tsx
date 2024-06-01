@@ -15,15 +15,15 @@ export default function App() {
     startOperation({
       operationId: 'hxet5stmvvoj',
       options: {
-        title: 'Prueba prueba',
+        title: 'KhipuReactNative',
         locale: 'es_CL',
         theme: 'light',
         skipExitPage: true,
         colors: {
-          lightBackground: '#0000ff',
-          lightPrimary: '#ff00ff',
-          lightTopBarContainer: '#ffffff',
-          lightOnTopBarContainer: '#333333',
+          // lightBackground: '#0000ff',
+          // lightPrimary: '#ff00ff',
+          // lightTopBarContainer: '#ffffff',
+          // lightOnTopBarContainer: '#333333',
         } as KhipuColors,
       } as KhipuOptions,
     }).then(setResult);
