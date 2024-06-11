@@ -11,21 +11,46 @@ npm install react-native-khipu
 
 ## Android
 
-Add the `Khipu` repository to the allprojects section of `android/build.gradle` file.
+Add the `Khipu` repository to the allprojects section of `android/build.gradle` file, also Khipu need the kotlin gradle plugin to be, at least, version 1.9.0 and with that to be compiled against the android sdk `34` so please make sure the  `android/build.gradle` file looks like this
+
+
+```groovy
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 21
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+
+        // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
+        ndkVersion = "23.1.7779620"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+    }
+}
+
+allprojects {
+    repositories {
+        maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
+    }
+}
 
 ```
-allprojects {
-  repositories {
-    maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
-  }
-}
-```
+
 
 If you are using jetifier please exclude the `jackson-core` package from it in the `android/gradle.properties` file
 
 ```
 android.jetifier.ignorelist = jackson-core
 ```
+
 
 ## iOS
 
