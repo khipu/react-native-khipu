@@ -79,6 +79,7 @@ const result: KhipuResult = await startOperation({
   operationId: '<paymentId>',
   options: {
     title: '<Title to display in the payment process>', // Title for the top bar during the payment process.
+    titleImageUrl: '<Image to display centered in the topbar>', // Url of the image to display in the top bar.
     locale: 'es_CL', // Regional settings for the interface language. The standard format combines an ISO 639-1 language code and an ISO 3166 country code. For example, "es_CL" for Spanish (Chile).
     theme: 'light', // The theme of the interface, can be 'dark', 'light' or 'system'
     skipExitPage: false, // If true, skips the exit page at the end of the payment process, whether successful or failed.

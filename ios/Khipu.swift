@@ -2,28 +2,32 @@ import KhipuClientIOS
 
 @objc(Khipu)
 class Khipu: NSObject {
-    
+
     @objc(startOperation:withResolver:withRejecter:)
     func startOperation(startOperationOptions: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        
+
         var optionsBuilder = KhipuOptions.Builder()
-        
+
         if(startOperationOptions["options"] != nil) {
-            
+
             let options = startOperationOptions["options"] as! NSDictionary
-            
+
             if (options["title"] != nil) {
                 optionsBuilder = optionsBuilder.topBarTitle(options["title"]! as! String)
             }
-            
+
+            if (options["titleImageUrl"] != nil) {
+                            optionsBuilder = optionsBuilder.topBarImageUrl(options["titleImageUrl"]! as! String)
+            }
+
             if (options["skipExitPage"] != nil) {
                 optionsBuilder = optionsBuilder.skipExitPage(options["skipExitPage"]! as! Bool)
             }
-            
+
             if (options["locale"] != nil) {
                 optionsBuilder = optionsBuilder.locale(options["locale"]! as! String)
             }
-            
+
             if (options["theme"] != nil) {
                 let theme = options["theme"]! as! String
                 if(theme == "light") {
@@ -34,12 +38,12 @@ class Khipu: NSObject {
                     optionsBuilder = optionsBuilder.theme(.system)
                 }
             }
-            
+
             if (options["colors"] != nil) {
                 let colors = options["colors"] as! NSDictionary
-                
+
                 var colorsBuilder = KhipuColors.Builder()
-                
+
                 if (colors["lightBackground"] != nil) {
                     colorsBuilder = colorsBuilder.lightBackground(colors["lightBackground"]! as! String)
                 }
@@ -76,26 +80,26 @@ class Khipu: NSObject {
                 if (colors["darkOnTopBarContainer"] != nil) {
                     colorsBuilder = colorsBuilder.darkOnTopBarContainer(colors["darkOnTopBarContainer"]! as! String)
                 }
-                
-                
+
+
                 optionsBuilder = optionsBuilder.colors(colorsBuilder.build())
             }
         }
 
-        
-        
-        
+
+
+
         DispatchQueue.main.async {
             guard let presenter = RCTPresentedViewController() else {
                 reject("NO_AVAILABLE_VIEW", "There is no presented UIViewController", NSError())
                 return
             }
-            
+
             guard let operationId = startOperationOptions["operationId"] else {
                 reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
                 return
             }
-        
+
             KhipuLauncher.launch(presenter: presenter,
                                  operationId: operationId as! String,
                                  options: optionsBuilder.build()) { result in

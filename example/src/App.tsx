@@ -16,6 +16,8 @@ export default function App() {
       operationId: 'hxet5stmvvoj',
       options: {
         title: 'KhipuReactNative',
+        titleImageUrl:
+          'https://s3.amazonaws.com/static.khipu.com/buttons/2024/200x75-black.png',
         locale: 'es_CL',
         theme: 'light',
         skipExitPage: true,

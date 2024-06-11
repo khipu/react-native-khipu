@@ -97,6 +97,7 @@ class KhipuModule(reactContext: ReactApplicationContext) :
     if (options !== null) {
 
       options.getString("title")?.let { optionsBuilder.topBarTitle(it) }
+      options.getString("titleImageUrl")?.let { optionsBuilder.topBarImageUrl(it) }
       options.getBoolean("skipExitPage").let { optionsBuilder.skipExitPage(it) }
       options.getString("locale")?.let { optionsBuilder.locale(it) }
       if (options.hasKey("theme")) {
