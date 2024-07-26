@@ -33,6 +33,7 @@ export interface KhipuOptions {
   title: string | undefined;
   titleImageUrl: string | undefined;
   skipExitPage: boolean | undefined;
+  showFooter: boolean | undefined;
   theme: 'light' | 'dark' | 'system' | undefined;
   colors: KhipuColors | undefined;
 }

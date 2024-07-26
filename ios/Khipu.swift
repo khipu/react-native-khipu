@@ -23,6 +23,10 @@ class Khipu: NSObject {
             if (options["skipExitPage"] != nil) {
                 optionsBuilder = optionsBuilder.skipExitPage(options["skipExitPage"]! as! Bool)
             }
+            
+            if (options["showFooter"] != nil) {
+                optionsBuilder = optionsBuilder.showFooter(options["showFooter"]! as! Bool)
+            }
 
             if (options["locale"] != nil) {
                 optionsBuilder = optionsBuilder.locale(options["locale"]! as! String)
