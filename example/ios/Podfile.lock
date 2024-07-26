@@ -7,15 +7,15 @@ PODS:
   - hermes-engine (0.74.1):
     - hermes-engine/Pre-built (= 0.74.1)
   - hermes-engine/Pre-built (0.74.1)
-  - KhenshinProtocol (1.0.42)
-  - KhenshinSecureMessage (1.2.0):
-    - KHTweetNacl
-  - KhipuClientIOS (1.1.5):
-    - KhenshinProtocol (= 1.0.42)
-    - KhenshinSecureMessage (= 1.2.0)
-    - Socket.IO-Client-Swift
+  - KhenshinProtocol (1.0.44)
+  - KhenshinSecureMessage (1.3.0):
+    - KHTweetNacl (= 1.1.4)
+  - KhipuClientIOS (2.7.1):
+    - KhenshinProtocol (= 1.0.44)
+    - KhenshinSecureMessage (= 1.3.0)
+    - Socket.IO-Client-Swift (= 16.1.0)
     - Starscream (= 4.0.6)
-  - KHTweetNacl (1.1.3)
+  - KHTweetNacl (1.1.4)
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -944,11 +944,11 @@ PODS:
   - React-Mapbuffer (0.74.1):
     - glog
     - React-debug
-  - react-native-khipu (2.4.0):
+  - react-native-khipu (2.7.0):
     - DoubleConversion
     - glog
     - hermes-engine
-    - KhipuClientIOS
+    - KhipuClientIOS (= 2.7.1)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1390,10 +1390,10 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 16b8530de1b383cdada1476cf52d1b52f0692cbc
-  KhenshinProtocol: 36184f1ef7bc2a1d3110f9ec4a8fce73c38ecbda
-  KhenshinSecureMessage: 60ba9ba77e08568dd992b5ef3850596c0dba8ad1
-  KhipuClientIOS: d343a5e2f05c4477813b10d24e3c1c64070cf43f
-  KHTweetNacl: bc84ebc987a5235fc58ae9ccb9de01d504e29e0f
+  KhenshinProtocol: 12df55da4968686dfda93a80c3ffcc87de09cc32
+  KhenshinSecureMessage: f0604e236fe33a3538ee01129c74c94d724bf546
+  KhipuClientIOS: 851757710903d9bc6cf9ee053707b138f66a9987
+  KHTweetNacl: 405b98e955a2fdb50eb8372fde9c6b50b218e51b
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: efb313d8126259e9294dc4ee0002f44a6f676aba
   RCTRequired: f49ea29cece52aee20db633ae7edc4b271435562
@@ -1418,7 +1418,7 @@ SPEC CHECKSUMS:
   React-jsitracing: 233d1a798fe0ff33b8e630b8f00f62c4a8115fbc
   React-logger: 7e7403a2b14c97f847d90763af76b84b152b6fce
   React-Mapbuffer: 11029dcd47c5c9e057a4092ab9c2a8d10a496a33
-  react-native-khipu: 379e4266edd028636244d167c871bc627af5d667
+  react-native-khipu: e2366677ffdba17d255731a1c8c94e62f5d4d680
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
   React-NativeModulesApple: df46ff3e3de5b842b30b4ca8a6caae6d7c8ab09f
   React-perflogger: 3d31e0d1e8ad891e43a09ac70b7b17a79773003a
