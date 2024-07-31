@@ -98,8 +98,8 @@ class KhipuModule(reactContext: ReactApplicationContext) :
 
       options.getString("title")?.let { optionsBuilder.topBarTitle(it) }
       options.getString("titleImageUrl")?.let { optionsBuilder.topBarImageUrl(it) }
-      options.getBoolean("skipExitPage")?.let { optionsBuilder.skipExitPage(it) }
-      options.getBoolean("showFooter")?.let { optionsBuilder.showFooter(it) }
+      if (options.hasKey("skipExitPage")) optionsBuilder.skipExitPage(options.getBoolean("skipExitPage"))
+      if (options.hasKey("showFooter")) optionsBuilder.showFooter(options.getBoolean("showFooter"))
       options.getString("locale")?.let { optionsBuilder.locale(it) }
       if (options.hasKey("theme")) {
         val theme: String = options.getString("theme")!!
