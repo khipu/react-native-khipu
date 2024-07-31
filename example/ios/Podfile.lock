@@ -948,7 +948,7 @@ PODS:
     - DoubleConversion
     - glog
     - hermes-engine
-    - KhipuClientIOS (= 2.7.1)
+    - KhipuClientIOS (= 2.7.2)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
