@@ -23,9 +23,17 @@ class Khipu: NSObject {
             if (options["skipExitPage"] != nil) {
                 optionsBuilder = optionsBuilder.skipExitPage(options["skipExitPage"]! as! Bool)
             }
-            
+
             if (options["showFooter"] != nil) {
                 optionsBuilder = optionsBuilder.showFooter(options["showFooter"]! as! Bool)
+            }
+
+            if (options["showMerchantLogo"] != nil) {
+                optionsBuilder = optionsBuilder.showMerchantLogo(options["showMerchantLogo"]! as! Bool)
+            }
+
+            if (options["showPaymentDetails"] != nil) {
+                optionsBuilder = optionsBuilder.showPaymentDetails(options["showPaymentDetails"]! as! Bool)
             }
 
             if (options["locale"] != nil) {

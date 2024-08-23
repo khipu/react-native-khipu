@@ -34,6 +34,8 @@ export interface KhipuOptions {
   titleImageUrl: string | undefined;
   skipExitPage: boolean | undefined;
   showFooter: boolean | undefined;
+  showMerchantLogo: boolean | undefined;
+  showPaymentDetails: boolean | undefined;
   theme: 'light' | 'dark' | 'system' | undefined;
   colors: KhipuColors | undefined;
 }
