@@ -82,6 +82,9 @@ const result: KhipuResult = await startOperation({
     titleImageUrl: '<Image to display centered in the topbar>', // Url of the image to display in the top bar.
     locale: 'es_CL', // Regional settings for the interface language. The standard format combines an ISO 639-1 language code and an ISO 3166 country code. For example, "es_CL" for Spanish (Chile).
     theme: 'light', // The theme of the interface, can be 'dark', 'light' or 'system'
+    showFooter: true, // If true, a message is displayed at the bottom with the Khipu logo.
+    showMerchantLogo: true, // If true, the merchant's logo is displayed in the top bar.
+    showPaymentDetails: true, // If true, the payment code and a link to view the details are displayed.
     skipExitPage: false, // If true, skips the exit page at the end of the payment process, whether successful or failed.
     colors: {
       lightTopBarContainer: '<colorHex>', // Optional background color for the top bar in light mode.
