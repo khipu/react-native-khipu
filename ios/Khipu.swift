@@ -102,7 +102,8 @@ class Khipu: NSObject {
 
 
         DispatchQueue.main.async {
-            guard let presenter = RCTPresentedViewController() else {
+            
+            guard let presenter = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController else {
                 reject("NO_AVAILABLE_VIEW", "There is no presented UIViewController", NSError())
                 return
             }

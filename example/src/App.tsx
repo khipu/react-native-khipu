@@ -23,8 +23,8 @@ export default function App() {
           theme: 'light',
           skipExitPage: false,
           showFooter: false,
-          showMerchantLogo: true,
-          showPaymentDetails: true,
+          showMerchantLogo: false,
+          showPaymentDetails: false,
           colors: {
             // lightBackground: '#0000ff',
             // lightPrimary: '#ff00ff',
