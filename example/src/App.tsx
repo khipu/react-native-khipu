@@ -38,12 +38,8 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        id={'id'}
-        onChangeText={setId}
-        placeholder={'PaymentId'}
-      ></TextInput>
-      <Button title={'Start'} onPress={start}></Button>
+      <TextInput id={'id'} onChangeText={setId} placeholder={'PaymentId'} />
+      <Button title={'Start'} onPress={start} />
       <Text>OperationId: {result?.operationId}</Text>
       <Text>Result: {result?.result}</Text>
       <Text>ExitTitle: {result?.exitTitle}</Text>
