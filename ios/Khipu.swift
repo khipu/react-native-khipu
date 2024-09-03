@@ -97,40 +97,43 @@ class Khipu: NSObject {
                 optionsBuilder = optionsBuilder.colors(colorsBuilder.build())
             }
         }
-
-
-
-
+        
         DispatchQueue.main.async {
-            guard let operationId = startOperationOptions["operationId"] else {
-                reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
-                return
-            }
-            
             guard let presenter = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController else {
                 reject("NO_OPERATION_ID", "No rootViewController found", NSError())
                 return
             }
             
-            KhipuLauncher.launch(presenter: presenter,
-                                 operationId: operationId as! String,
-                                 options: optionsBuilder.build()) { result in
-                resolve([
-                    "operationId": result.operationId,
-                    "result": result.result,
-                    "exitTitle": result.exitTitle,
-                    "exitMessage": result.exitMessage,
-                    "exitUrl": result.exitUrl as Any,
-                    "failureReason": result.failureReason as Any,
-                    "continueUrl": result.continueUrl as Any,
-                    "events": result.events.map({ event in
-                        return [
-                            "name": event.name,
-                            "type": event.type,
-                            "timestamp": event.timestamp
-                        ]
-                    })
-                ])
+            
+            presenter.presentedViewController?.dismiss(animated: false)
+
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                guard let operationId = startOperationOptions["operationId"] else {
+                    reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
+                    return
+                }
+                
+                KhipuLauncher.launch(presenter: presenter,
+                                     operationId: operationId as! String,
+                                     options: optionsBuilder.build()) { result in
+                    resolve([
+                        "operationId": result.operationId,
+                        "result": result.result,
+                        "exitTitle": result.exitTitle,
+                        "exitMessage": result.exitMessage,
+                        "exitUrl": result.exitUrl as Any,
+                        "failureReason": result.failureReason as Any,
+                        "continueUrl": result.continueUrl as Any,
+                        "events": result.events.map({ event in
+                            return [
+                                "name": event.name,
+                                "type": event.type,
+                                "timestamp": event.timestamp
+                            ]
+                        })
+                    ])
+                }
             }
         }
     }
