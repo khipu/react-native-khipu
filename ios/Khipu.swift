@@ -106,8 +106,14 @@ class Khipu: NSObject {
                 reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
                 return
             }
-
-            KhipuLauncher.launch(operationId: operationId as! String,
+            
+            guard let presenter = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController else {
+                reject("NO_OPERATION_ID", "No rootViewController found", NSError())
+                return
+            }
+            
+            KhipuLauncher.launch(presenter: presenter,
+                                 operationId: operationId as! String,
                                  options: optionsBuilder.build()) { result in
                 resolve([
                     "operationId": result.operationId,
