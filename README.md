@@ -44,6 +44,12 @@ allprojects {
 
 ```
 
+Also make sure that the kotlin plugin is applied, check the `android/app/build.gradle` file for something like:
+
+```
+apply plugin: 'kotlin-android'
+```
+
 
 If you are using jetifier please exclude the `jackson-core` package from it in the `android/gradle.properties` file
 
