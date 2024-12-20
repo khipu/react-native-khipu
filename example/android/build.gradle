@@ -18,4 +18,10 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
