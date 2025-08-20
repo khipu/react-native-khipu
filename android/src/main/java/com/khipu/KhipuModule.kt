@@ -2,6 +2,7 @@ package com.khipu
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import com.facebook.react.bridge.BaseActivityEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -32,16 +33,20 @@ class KhipuModule(reactContext: ReactApplicationContext) :
   private val activityEventListener =
     object : BaseActivityEventListener() {
       override fun onActivityResult(
-        activity: Activity?,
+        activity: Activity,
         requestCode: Int,
         resultCode: Int,
-        intent: Intent?
+        data: Intent?
       ) {
         if (requestCode == START_OPERATION_REQUEST) {
           startOperationPromise?.let { promise ->
             when (resultCode) {
               Activity.RESULT_OK -> {
-                val result = intent?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as KhipuResult
+                val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                  data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java) as KhipuResult
+                } else {
+                  data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as KhipuResult
+                }
                 val returnMap = WritableNativeMap()
                 returnMap.putString("operationId", result.operationId)
                 returnMap.putString("result", result.result)
@@ -76,7 +81,7 @@ class KhipuModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun startOperation(operationOptions: ReadableMap, promise: Promise) {
 
-    val activity = currentActivity
+    val activity = reactApplicationContext.currentActivity
 
     if (activity == null) {
       promise.reject(NO_AVAILABLE_VIEW, "Activity doesn't exist")
