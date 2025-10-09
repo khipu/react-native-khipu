@@ -1,6 +1,6 @@
 {
   "name": "react-native-khipu",
-  "version": "2.12.2",
+  "version": "2.12.3",
   "description": "Khipu for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
