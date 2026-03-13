@@ -104,6 +104,7 @@ class KhipuModule(reactContext: ReactApplicationContext) :
       options.getString("title")?.let { optionsBuilder.topBarTitle(it) }
       options.getString("titleImageUrl")?.let { optionsBuilder.topBarImageUrl(it) }
       if (options.hasKey("skipExitPage")) optionsBuilder.skipExitPage(options.getBoolean("skipExitPage"))
+      if (options.hasKey("skipExitSuccessPage")) optionsBuilder.skipExitSuccessPage(options.getBoolean("skipExitSuccessPage"))
       if (options.hasKey("showFooter")) optionsBuilder.showFooter(options.getBoolean("showFooter"))
       if (options.hasKey("showMerchantLogo")) optionsBuilder.showMerchantLogo(options.getBoolean("showMerchantLogo"))
       if (options.hasKey("showPaymentDetails")) optionsBuilder.showPaymentDetails(options.getBoolean("showPaymentDetails"))

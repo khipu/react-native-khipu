@@ -33,6 +33,7 @@ export interface KhipuOptions {
   title: string | undefined;
   titleImageUrl: string | undefined;
   skipExitPage: boolean | undefined;
+  skipExitSuccessPage: boolean | undefined;
   showFooter: boolean | undefined;
   showMerchantLogo: boolean | undefined;
   showPaymentDetails: boolean | undefined;

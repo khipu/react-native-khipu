@@ -10,7 +10,7 @@ PODS:
   - KhenshinProtocol (1.0.48)
   - KhenshinSecureMessage (1.4.0):
     - KHTweetNaclSwift (= 1.1.0)
-  - KhipuClientIOS (2.14.0):
+  - KhipuClientIOS (2.16.0):
     - KhenshinProtocol (= 1.0.48)
     - KhenshinSecureMessage (= 1.4.0)
     - Socket.IO-Client-Swift (= 16.1.1)
@@ -944,11 +944,11 @@ PODS:
   - React-Mapbuffer (0.74.1):
     - glog
     - React-debug
-  - react-native-khipu (2.12.6):
+  - react-native-khipu (2.12.8):
     - DoubleConversion
     - glog
     - hermes-engine
-    - KhipuClientIOS (= 2.14.0)
+    - KhipuClientIOS (= 2.16.0)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1392,7 +1392,7 @@ SPEC CHECKSUMS:
   hermes-engine: 16b8530de1b383cdada1476cf52d1b52f0692cbc
   KhenshinProtocol: 9865801842c6c1aa4909359c3679dee47edab94f
   KhenshinSecureMessage: 5133da5475029033d0309d1720acb732ce3c6ffd
-  KhipuClientIOS: 6a0b92d34a0d720aa0f804bad536d50a3de16cd7
+  KhipuClientIOS: 5f0153d8b513c8398f2ec6d76aee18e245e2829a
   KHTweetNaclSwift: 1a09d2967f9ecbd8d6176b30a96e1e280c1f1d90
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: efb313d8126259e9294dc4ee0002f44a6f676aba
@@ -1418,7 +1418,7 @@ SPEC CHECKSUMS:
   React-jsitracing: 233d1a798fe0ff33b8e630b8f00f62c4a8115fbc
   React-logger: 7e7403a2b14c97f847d90763af76b84b152b6fce
   React-Mapbuffer: 11029dcd47c5c9e057a4092ab9c2a8d10a496a33
-  react-native-khipu: ffc38a0351ba8f97089b1a33abe6867c5b2d8d06
+  react-native-khipu: cce0f11a8885aca4218ac344ddb969fff9e85123
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
   React-NativeModulesApple: df46ff3e3de5b842b30b4ca8a6caae6d7c8ab09f
   React-perflogger: 3d31e0d1e8ad891e43a09ac70b7b17a79773003a
