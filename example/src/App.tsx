@@ -22,7 +22,7 @@ export default function App() {
           locale: 'es_CL',
           theme: 'light',
           skipExitPage: false,
-          skipExitSuccessPage: true,
+          skipExitSuccessPage: false,
           showFooter: true,
           showMerchantLogo: false,
           showPaymentDetails: false,
