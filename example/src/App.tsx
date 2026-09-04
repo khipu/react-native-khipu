@@ -1,72 +1,60 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text, TextInput, Button } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import {
-  type KhipuColors,
   type KhipuOptions,
   type KhipuResult,
   startOperation,
 } from 'react-native-khipu';
 
+// Instrumentacion de medicion: la pantalla se pinta magenta solido justo antes
+// de llamar a startOperation. Un PNG de color solido pesa muy poco y la UI de
+// Khipu pesa mucho, asi que el salto de tamano entre capturas marca los dos
+// instantes sin necesidad de mirar cada imagen.
+const OPERATION_ID = 'a8klrrvmwtg9';
+
 export default function App() {
   const [result, setResult] = React.useState<KhipuResult | undefined>();
-  const [id, setId] = React.useState<string | null>(null);
-  const start = function () {
-    if (id !== null) {
+  const [started, setStarted] = React.useState(false);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setStarted(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  React.useEffect(() => {
+    if (!started) {
+      return;
+    }
+    // Un frame despues de pintar el marcador, para que la captura lo alcance.
+    const raf = requestAnimationFrame(() => {
       startOperation({
-        operationId: id,
+        operationId: OPERATION_ID,
         options: {
-          title: 'KhipuReactNative',
-          titleImageUrl:
-            'https://s3.amazonaws.com/static.khipu.com/buttons/2024/200x75-black.png',
+          title: 'Baseline',
           locale: 'es_CL',
           theme: 'light',
-          skipExitPage: false,
-          skipExitSuccessPage: false,
           showFooter: true,
-          showMerchantLogo: false,
-          showPaymentDetails: false,
-          colors: {
-            // lightBackground: '#0000ff',
-            // lightPrimary: '#ff00ff',
-            // lightTopBarContainer: '#ffffff',
-            // lightOnTopBarContainer: '#333333',
-          } as KhipuColors,
+          showPaymentDetails: true,
         } as KhipuOptions,
       }).then(setResult);
-    }
-  };
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [started]);
+
+  if (started) {
+    return <View style={styles.marker} />;
+  }
 
   return (
     <View style={styles.container}>
-      <TextInput id={'id'} onChangeText={setId} placeholder={'PaymentId'} />
-      <Button title={'Start'} onPress={start} />
-      <Text>OperationId: {result?.operationId}</Text>
-      <Text>Result: {result?.result}</Text>
-      <Text>ExitTitle: {result?.exitTitle}</Text>
-      <Text>ExitMessage: {result?.exitMessage}</Text>
-      <Text>ExitUrl: {result?.exitUrl}</Text>
-      <Text>FailureReason: {result?.failureReason}</Text>
-      <Text>ContinueUrl: {result?.continueUrl}</Text>
-      <Text>
-        Events:
-        {result?.events.map((e) => {
-          return `${e.name} (${e.type}) : ${e.timestamp}`;
-        })}
-      </Text>
+      <Text>esperando</Text>
+      <Text>result: {result?.result}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
-  },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  marker: { flex: 1, backgroundColor: '#FF00FF' },
 });
