@@ -41,7 +41,9 @@ Estamos a menos de tres meses. Esto no es trabajo a futuro.
 | RN del `example` | `0.74.1` |
 | Última RN estable | **`0.87.1`** — 13 minors de brecha |
 | Fuentes iOS | `ios/Khipu.swift`, `ios/Khipu.mm`, `ios/Khipu-Bridging-Header.h` |
-| Tipo de módulo | Legacy: `RCT_EXTERN_MODULE`, sin codegen |
+| Tipo de módulo (iOS) | Legacy: `RCT_EXTERN_MODULE`, sin codegen |
+| Tipo de módulo (Android) | Legacy: `KhipuModule : ReactContextBaseJavaModule`, `KhipuPackage : ReactPackage`, opciones leídas de `ReadableMap` por claves de string |
+| `codegenConfig` | ausente |
 | Podspec: SDK | `s.dependency "KhipuClientIOS", "2.16.2"` |
 | Podspec: New Architecture | `install_modules_dependencies(s)` con rama manual de fallback |
 | `react-native-builder-bob` | `0.20.0` (actual: `0.43.0`) |
@@ -113,7 +115,8 @@ que **no hay que subir el piso a RN 0.79** para tener SPM.
    2 de diciembre. Para subir de SDK, esos comercios suben de RN. No se monta Specs repo propio.
 3. **Camino B — `Package.swift` propio, marcado como experimental** en el README, alineado con
    el lenguaje de Meta, para no comprometer soporte sobre un formato en rotación.
-4. **TurboModule con codegen**, manteniendo el `.mm`.
+4. **TurboModule con codegen en las dos plataformas**, manteniendo el `.mm` en iOS. Android entra
+   obligatoriamente porque `codegenConfig` es cross-platform (§7).
 5. **Arreglar el presenter deprecado** (§8).
 6. **`LSApplicationQueriesSchemes` en el example** (§9).
 
@@ -241,6 +244,12 @@ Native real.
 > de runtime desde un build con `--no-codesign`. Ese flag produce una firma linker-signed que deja
 > al proceso sin acceso al Keychain, todo `SecItem*` devuelve `-34018` y bajo `2.16.4` mataba la
 > app a mitad del pago. El sondeo de este spec usó builds normales.
+>
+> **Es una trampa de testing, no un incidente de campo.** Un build de dispositivo lleva
+> `application-identifier` en sus entitlements, que es lo que provee el access group por defecto
+> del Keychain — la sesión de Flutter lo comprobó sobre el binario firmado. El problema está
+> acotado a entornos que carecen de eso: builds `--no-codesign` y test targets sin host app. La
+> app que publica un comercio no lo pisa. No dimensionar nada de este trabajo como si lo fuera.
 
 ## 5. Podspec
 
@@ -336,16 +345,57 @@ v9, v10, v11, v12, v13, v18 y v19 — todos en poco tiempo. Un manifiesto escrit
 marcado como *self-managed* y RN **nunca** lo regenera. Lo mantenemos nosotros contra un blanco
 móvil. De ahí que se documente como experimental.
 
-## 7. TurboModule
+## 7. TurboModule — las dos plataformas
+
+### Codegen es cross-platform: Android entra sí o sí
+
+`codegenConfig` se declara **una sola vez en `package.json`** y alimenta el codegen de iOS y de
+Android por igual. No existe una migración limpia de una sola plataforma.
+
+Estado actual del lado Android: `KhipuModule` extiende `ReactContextBaseJavaModule` (legacy),
+`KhipuPackage` implementa `ReactPackage` a mano, y las opciones se leen de un `ReadableMap` por
+claves de string (`options.getString("titleImageUrl")`, `options.hasKey("skipExitPage")`, …).
+El template oficial de `create-react-native-library` para `turbo-module` hace lo contrario:
+el módulo Kotlin **extiende la clase generada** (`NativeKhipuSpec`) y el package extiende
+`BaseReactPackage`.
+
+Se evaluó y **se descarta** declarar el spec dejando Android en legacy apoyado en la capa de
+interop: es una combinación que nadie ejercita y que no se verificó. Migrar solo iOS no es una
+opción disponible.
 
 | Archivo | Rol |
 |---|---|
 | `src/NativeKhipu.ts` | Spec de codegen: `interface Spec extends TurboModule` + `TurboModuleRegistry` |
 | `src/index.tsx` | Reexporta, conservando la API pública actual |
+| `package.json` | `codegenConfig` con `name`, `type: "modules"`, `jsSrcsDir` |
 | `ios/Khipu.h` | `@interface Khipu : NSObject <NativeKhipuSpec>` |
 | `ios/Khipu.mm` | `getTurboModule:`, `moduleName`, y delegación a la clase Swift |
 | `ios/Khipu.swift` | La implementación, sin cambios de fondo salvo §8 |
-| `package.json` | `codegenConfig` con `name`, `type: "modules"`, `jsSrcsDir` |
+| `android/.../KhipuModule.kt` | Pasa a extender `NativeKhipuSpec` en vez de `ReactContextBaseJavaModule` |
+| `android/.../KhipuPackage.kt` | Pasa a `BaseReactPackage` con `getReactModuleInfoProvider()` |
+| `android/build.gradle` | Bloque `react { }` para que Gradle corra codegen |
+
+### El beneficio que compra, más allá de la modernización
+
+Hoy las claves del contrato JS↔nativo son strings sueltos en tres superficies
+(`src/index.tsx`, `ios/Khipu.swift`, `android/.../KhipuModule.kt`) y **nada las verifica**. Un
+rename en un lado desactiva esa opción en silencio, sin error de compilación ni de runtime.
+
+Verificación hecha al escribir este spec: **hoy los tres conjuntos coinciden**, en ambas
+direcciones. No hay ninguna clave huérfana. No es un bug vivo, es una fragilidad.
+
+Migrar a codegen **cierra esa clase de bug por construcción**: los accesores pasan a ser tipos
+generados y un rename rompe la compilación en la plataforma afectada. Ese es el argumento más
+fuerte para migrar las dos plataformas juntas y no de a una — hacerlo por mitades deja
+precisamente el período en que las superficies divergen sin red.
+
+> La sesión de `flutter_khipu` resolvió lo mismo con un test que compara los conjuntos de claves
+> leyendo las fuentes de los dos lenguajes (`test/method_channel_seam_test.dart`, 12 tests, con
+> seis que verifican que el propio extractor siga mordiendo — si un reformateo rompe el patrón,
+> los conjuntos colapsan a vacío y comparan iguales). Para nosotros ese test es **la red durante
+> la migración**, no el estado final: una vez que codegen esté en pie, el compilador hace ese
+> trabajo. Vale la pena escribirlo primero y descartarlo después, o dejarlo si resulta que
+> algún campo queda fuera de codegen.
 
 ### Compatibilidad hacia atrás
 
@@ -449,9 +499,16 @@ propósito), así que sirve igual si algún día bajamos el piso.
 sugiere una extensión `topMostViewController()`, pero un plugin enlazado estáticamente que mete
 ese nombre en la app del comercio puede colisionar con el suyo.
 
-Crédito: lo levantó la sesión de `flutter_khipu` (PR #13 de ese repo). Verificado contra nuestro
-código, donde el síntoma es distinto y peor: Flutter falla en silencio, nosotros destruimos
-estado de UI ajeno.
+Crédito: lo levantó la sesión de `flutter_khipu`. **Ya está mergeado y liberado allá** — PR #13,
+commit `667714b`, publicado en `flutter_khipu 1.7.1`, así que es un diff que se puede leer en vez
+de una descripción. Verificado contra nuestro código, donde el síntoma es distinto y peor:
+Flutter falla en silencio, nosotros destruimos estado de UI ajeno.
+
+Allá se validó **en dispositivo físico** (iPhone 13, iOS 26.6.1, build release con firma real),
+presentando un controlador transparente al toque para que el root ya estuviera presentando y
+lanzando el pago automáticamente: cero ocurrencias de *"already presenting"* / *"Attempt to
+present"*, y el flujo llegó a `OPERATION_SUCCESS`. Bajo el código viejo esa presentación habría
+sido rechazada. Nuestra validación equivalente es el paso 6 del gate (§11).
 
 ## 9. Example y `Info.plist`
 
@@ -519,9 +576,25 @@ puede.
 6. **El presenter, con un modal arriba.** Levantar un modal propio en el example y llamar
    `startOperation`. Debe presentar Khipu **encima**, sin cerrar el modal, y **sin el segundo de
    espera**. Es la verificación de que §8 arregla lo que dice arreglar.
-7. **`openApp`** — con las schemes declaradas, confirmar que `canOpenURL` resuelve.
-8. **Android sin regresión** — no se toca, pero se corre.
-9. `yarn lint`, `yarn typecheck`, `yarn test`.
+7. **`openApp` en dispositivo físico.** Con las schemes declaradas, confirmar que `canOpenURL`
+   resuelve y que una app bancaria **efectivamente abre**.
+
+   > Esto merece un párrafo aparte porque el estado real es peor de lo que parece. Las nueve
+   > schemes son correctas **por inspección** contra la documentación, y así se verificaron acá
+   > (§9). Pero según la sesión de `flutter_khipu`, `openApp` **nunca se ha ejercitado en runtime
+   > en ninguna de las cuatro integraciones** — nadie ha visto abrirse una app de banco. Y como
+   > nuestro example hoy no declara **ninguna** scheme, somos el repo donde la brecha es más
+   > ancha. Si logramos una corrida en dispositivo, seríamos los primeros en cerrarla para
+   > cualquiera de los cuatro plugins. Requiere hardware con apps bancarias instaladas, así que
+   > si no se consigue, **dejarlo escrito como no verificado** en vez de darlo por bueno.
+
+8. **Android: TurboModule funcionando.** El example en Android corriendo un pago completo con el
+   módulo migrado a `NativeKhipuSpec`. No es "correr Android por si acaso" — Android cambia en
+   este trabajo (§7) y necesita su propia validación de extremo a extremo.
+9. **Paridad de opciones entre plataformas.** Con el mismo `startOperation` (título, colores,
+   `skipExitPage`, `theme`), confirmar que iOS y Android se comportan igual. Es la verificación
+   de que el contrato de claves sobrevivió a la migración a codegen en los dos lados.
+10. `yarn lint`, `yarn typecheck`, `yarn test`.
 
 ## 12. Riesgos
 
@@ -530,6 +603,8 @@ puede.
 | Que no se publique en trunk la versión final de `KhipuClientIOS`, `KhenshinProtocol` y `KhenshinSecureMessage` antes del **2026-12-02** | **Alto, y no depende de este repo** | Es el piso permanente de los comercios en RN <0.75. Decidir cuál es y publicarla con holgura, no el 1 de diciembre. Ver §13 |
 | El helper del `Podfile` es un paso de instalación nuevo para el comercio | Conocido y aceptado | Documentado en el README. Se retira cuando el fix llegue upstream a RN |
 | Que codegen no acepte algún tipo de las opciones actuales | Medio | §7. Se ajusta la declaración manteniendo la forma del objeto |
+| Que la migración a codegen rompa el contrato de claves en una plataforma y no en la otra | Medio | Escribir primero el test de conjuntos de claves (§7) como red durante la migración, y el paso 9 del gate como verificación de paridad |
+| Que `openApp` no funcione pese a las schemes correctas — nunca se ha visto abrir un banco en ninguna integración | **Desconocido, no bajo** | Paso 7 del gate, en dispositivo físico. Si no hay hardware, se documenta como no verificado en vez de asumirlo |
 | Que el `Package.swift` del §6 quede desactualizado con RN 0.88+ | **Alto, aceptado** | Por eso va marcado experimental. `SCAFFOLDER_VERSION` va en 19 con muchos bumps rompientes |
 | Que el linking dinámico falle | Bajo | Paso 2 del gate |
 | Un comercio que declare `KhipuClientIOS` directo por SPM con `from:` choca con nuestro `exact:` | Conocido y aceptado | Consecuencia deliberada de la política de versiones |
@@ -545,7 +620,9 @@ diseño depende de ello: es lo que van a recibir para siempre los comercios en R
 
 ## 14. Fuera de alcance
 
-- **Android.** Usa Gradle, no le afecta nada de esto.
+- **El lado Gradle de Android.** El SDK de Android (`com.khipu:khipu-client-android`) se sigue
+  resolviendo por Maven y no le afecta nada del freeze de CocoaPods. Lo que sí cambia en Android
+  es el módulo, por codegen (§7).
 - **Specs repo propio de Khipu.** Evaluado y descartado en favor de congelar RN <0.75 (§3.2).
 - **Subir `react-native-builder-bob`** de 0.20 a 0.43. Cambia el formato de salida JS (campo
   `exports`, ESM) y puede romper bundlers viejos. Merece su propio cambio, hecho con intención.
@@ -565,4 +642,5 @@ diseño depende de ello: es lo que van a recibir para siempre los comercios en R
 - Doc de Khipu, React Native: `https://docs.khipu.com/payment-solutions/instant-payments/khipu-client-react-native`
 - Spec upstream: `khipu/KhipuClientIOS` → `docs/superpowers/specs/2026-06-28-spm-khipuclientios-design.md`
 - Spec hermano: `khipu/flutter_khipu` → `docs/superpowers/specs/2026-09-04-spm-flutter-khipu-design.md`
-- Presenter: PR #13 en `khipu/flutter_khipu`
+- Presenter: PR #13 en `khipu/flutter_khipu`, mergeado como `667714b`, liberado en `1.7.1`
+- Test de contrato de claves: `test/method_channel_seam_test.dart` en `khipu/flutter_khipu`
