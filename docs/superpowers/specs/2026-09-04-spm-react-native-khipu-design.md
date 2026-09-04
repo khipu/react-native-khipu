@@ -384,18 +384,26 @@ rename en un lado desactiva esa opción en silencio, sin error de compilación n
 Verificación hecha al escribir este spec: **hoy los tres conjuntos coinciden**, en ambas
 direcciones. No hay ninguna clave huérfana. No es un bug vivo, es una fragilidad.
 
-Migrar a codegen **cierra esa clase de bug por construcción**: los accesores pasan a ser tipos
-generados y un rename rompe la compilación en la plataforma afectada. Ese es el argumento más
-fuerte para migrar las dos plataformas juntas y no de a una — hacerlo por mitades deja
-precisamente el período en que las superficies divergen sin red.
+Migrar a codegen cierra esa clase de bug **solo en iOS**. Medido corriendo los generadores de RN
+0.87.1 sobre un spec candidato con nuestros tipos reales:
 
-> La sesión de `flutter_khipu` resolvió lo mismo con un test que compara los conjuntos de claves
-> leyendo las fuentes de los dos lenguajes (`test/method_channel_seam_test.dart`, 12 tests, con
-> seis que verifican que el propio extractor siga mordiendo — si un reformateo rompe el patrón,
-> los conjuntos colapsan a vacío y comparan iguales). Para nosotros ese test es **la red durante
-> la migración**, no el estado final: una vez que codegen esté en pie, el compilador hace ese
-> trabajo. Vale la pena escribirlo primero y descartarlo después, o dejarlo si resulta que
-> algún campo queda fuera de codegen.
+| Plataforma | Qué genera codegen | ¿Protege el contrato? |
+|---|---|---|
+| iOS | `JS::NativeKhipu::KhipuOptions` con accesores tipados (`theme()`, `titleImageUrl()`, …) | **Sí.** Un rename en el spec TS rompe la compilación de ObjC++ |
+| Android | `public abstract void startOperation(ReadableMap options, Promise promise)` | **No.** El Java generado no contiene **ninguna** clave de opciones; el módulo las sigue leyendo con `getString("titleImageUrl")` |
+
+Es una asimetría del propio codegen, no algo que podamos configurar: para parámetros de tipo
+objeto, el generador de Java pasa el `ReadableMap` sin desarmar.
+
+**Consecuencia para el diseño:** el test de conjuntos de claves **no es una red temporal, es
+permanente**, porque es lo único que va a proteger el lado Android. La sesión de `flutter_khipu`
+resolvió lo mismo con `test/method_channel_seam_test.dart` — 12 tests, de los cuales seis
+verifican que el propio extractor siga mordiendo: si un reformateo rompe el patrón, los conjuntos
+colapsan a vacío y comparan iguales, o sea que un extractor roto se ve idéntico a un protocolo
+sano. Esa parte es la que hay que copiar con cuidado.
+
+Migrar las dos plataformas juntas sigue siendo lo correcto, pero por la razón de arriba (codegen
+es cross-platform), no porque cierre el contrato en ambas.
 
 ### Compatibilidad hacia atrás
 
@@ -602,8 +610,8 @@ puede.
 |---|---|---|
 | Que no se publique en trunk la versión final de `KhipuClientIOS`, `KhenshinProtocol` y `KhenshinSecureMessage` antes del **2026-12-02** | **Alto, y no depende de este repo** | Es el piso permanente de los comercios en RN <0.75. Decidir cuál es y publicarla con holgura, no el 1 de diciembre. Ver §13 |
 | El helper del `Podfile` es un paso de instalación nuevo para el comercio | Conocido y aceptado | Documentado en el README. Se retira cuando el fix llegue upstream a RN |
-| Que codegen no acepte algún tipo de las opciones actuales | Medio | §7. Se ajusta la declaración manteniendo la forma del objeto |
-| Que la migración a codegen rompa el contrato de claves en una plataforma y no en la otra | Medio | Escribir primero el test de conjuntos de claves (§7) como red durante la migración, y el paso 9 del gate como verificación de paridad |
+| Que codegen no acepte algún tipo de las opciones actuales | **Descartado empíricamente** | Se corrió el parser y los cuatro generadores de RN 0.87.1 sobre un spec candidato con los tipos reales: pasan la unión de literales de `theme`, los objetos anidados, el array de `events` y los diez opcionales. Ver §7 |
+| Que un rename de clave desactive una opción en silencio **en Android**, donde codegen no protege nada | **Permanente, no se cierra con la migración** | El test de conjuntos de claves (§7) es la única defensa y queda como artefacto permanente, no como red temporal. Más el paso 9 del gate como verificación de paridad |
 | Que `openApp` no funcione pese a las schemes correctas — nunca se ha visto abrir un banco en ninguna integración | **Desconocido, no bajo** | Paso 7 del gate, en dispositivo físico. Si no hay hardware, se documenta como no verificado en vez de asumirlo |
 | Que el `Package.swift` del §6 quede desactualizado con RN 0.88+ | **Alto, aceptado** | Por eso va marcado experimental. `SCAFFOLDER_VERSION` va en 19 con muchos bumps rompientes |
 | Que el linking dinámico falle | Bajo | Paso 2 del gate |
