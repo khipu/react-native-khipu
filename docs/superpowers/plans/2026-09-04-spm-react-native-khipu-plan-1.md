@@ -160,22 +160,52 @@ arreglarlo antes de seguir. Un harness que no muerde no prueba nada.
 
 En `ios/Khipu.swift`, dentro de `class Khipu`, antes de `startOperation`:
 
+**`connectedScenes` es iOS 13+, y React Native 0.70 a 0.72 declaran un piso de 12.4.** Sin el
+`#available` la librería no compila en esos proyectos — verificado con `swiftc -typecheck`:
+*"'connectedScenes' is only available in iOS 13.0 or newer"*. El guard no es opcional.
+
 ```swift
+    /// Ventana clave en iOS 12, donde no existen las escenas.
+    /// Anotado deprecado en 13.0 para que las apps modernas, que nunca ejecutan
+    /// esta rama, no arrastren el warning de deprecacion de iOS 15.
+    @available(iOS, introduced: 2.0, deprecated: 13.0)
+    private static func legacyKeyWindow() -> UIWindow? {
+        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+            ?? UIApplication.shared.windows.first
+    }
+
     /// Devuelve el controlador mas alto de la escena activa.
     /// Privado a proposito: enlazado estaticamente, un nombre publico como
     /// `topMostViewController()` colisiona con el del comercio.
     private static func presenter() -> UIViewController? {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first,
-              let window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first
-        else { return nil }
+        var window: UIWindow?
 
-        var controller = window.rootViewController
+        if #available(iOS 13.0, *) {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+            else { return nil }
+            window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first
+        } else {
+            window = legacyKeyWindow()
+        }
+
+        guard let keyWindow = window else { return nil }
+
+        var controller = keyWindow.rootViewController
         while let presented = controller?.presentedViewController {
             controller = presented
         }
         return controller
     }
+```
+
+Verificar los cuatro pisos antes de dar la tarea por buena:
+
+```bash
+SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
+for t in 12.4 13.0 13.4 15.1; do
+  swiftc -typecheck -sdk "$SDK" -target arm64-apple-ios${t}-simulator <archivo> && echo "OK $t"
+done
 ```
 
 - [ ] **Step 4: Reemplazar el bloque del presenter, el dismiss y el delay**
@@ -260,17 +290,20 @@ git add ios/Khipu.swift example/src/App.tsx
 git commit -m "fix(ios): presentar sobre el controlador mas alto en vez de cerrar el modal del comercio"
 ```
 
-- [ ] **Step 10: Liberar como patch**
+- [x] **Step 10: ~~Liberar como patch~~ — decidido: va en el release conjunto**
 
-Este arreglo no depende de nada de lo que sigue y corrige un bug que los comercios están sufriendo
-hoy. Liberarlo solo, sin esperar la migración.
+El plan original lo liberaba solo. **Se descartó** al ejecutarlo, por dos razones que aparecieron
+durante la verificación:
 
-```bash
-yarn release
-```
+1. El arreglo cambia el código de error del guard del presenter de `NO_OPERATION_ID` a
+   `NO_PRESENTER`. El viejo era derechamente incorrecto —devolvía un error de operationId en un
+   fallo que no tenía nada que ver—, pero corregirlo es un cambio de contrato observable, y eso
+   pide minor, no patch.
+2. Sumado a que tampoco cerramos ya el modal del comercio, son dos cambios de comportamiento
+   visibles. Se documentan juntos en el CHANGELOG de **`2.15.0`** (Task 6) en vez de repartirlos
+   entre dos releases.
 
-Entrada de CHANGELOG: arreglo del presenter, se elimina el retardo de 1 segundo en cada pago, deja
-de cerrarse el modal del comercio.
+**El arreglo queda commiteado en la rama, sin publicar.** Sale en Task 6.
 
 ---
 
@@ -863,8 +896,9 @@ haberlo hecho arruina ese dato para todos.
 yarn release
 ```
 
-Es un **minor** (`2.15.0`): cambia cómo se resuelve la dependencia y agrega un paso de instalación
-obligatorio en RN ≥0.75. El CHANGELOG debe decir explícitamente que el `Podfile` necesita el
+Es un **minor** (`2.15.0`): cambia cómo se resuelve la dependencia, agrega un paso de instalación
+obligatorio en RN ≥0.75, y trae además los dos cambios de comportamiento del presenter (Task 2
+Step 10): ya no se cierra el modal del comercio, y el código de error pasa a `NO_PRESENTER`. El CHANGELOG debe decir explícitamente que el `Podfile` necesita el
 helper, o los comercios van a actualizar y romperse sin entender por qué.
 
 - [ ] **Step 5: Abrir el PR upstream a React Native**
