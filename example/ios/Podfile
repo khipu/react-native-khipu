@@ -1,5 +1,14 @@
 source 'https://github.com/CocoaPods/Specs.git'
 
+# OJO: un comercio usa la forma con require.resolve que documenta el README,
+# porque su copia del plugin vive en node_modules. Aca no sirve: en este repo la
+# libreria ES la raiz del workspace y no hay node_modules/react-native-khipu que
+# resolver. Por eso el example apunta por path relativo.
+#
+# Consecuencia: el example NO ejercita el snippet que le damos al comercio. Ese
+# camino se verifica aparte, desde una app con el plugin instalado de verdad.
+require File.join(__dir__, "..", "..", "ios", "khipu_spm_fix.rb")
+
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -25,18 +34,16 @@ target 'KhipuExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'KhipuExampleTests' do
-    inherit! :complete
-    # Pods for testing
-  end
-
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Debe ir DESPUES de react_native_post_install, que es quien corre la
+    # reescritura rota de modulemaps que esto corrige.
+    khipu_fix_spm_modulemaps(installer)
   end
 end

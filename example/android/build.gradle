@@ -1,11 +1,11 @@
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
-        minSdkVersion = 23
-        compileSdkVersion = 35
-        targetSdkVersion = 35
-        ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.22"
+        buildToolsVersion = "37.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 37
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.2.0"
     }
     repositories {
         google()
@@ -18,6 +18,10 @@ buildscript {
     }
 }
 
+// El SDK de Android de Khipu vive en el Nexus de Khipu, no en Maven Central ni
+// en el repo de Google. Sin esto la resolucion falla con
+// "Could not find com.khipu:khipu-client-android". Es el mismo bloque que el
+// README le pide agregar al comercio.
 allprojects {
     repositories {
         maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }

@@ -3,6 +3,50 @@ import KhipuClientIOS
 @objc(Khipu)
 class Khipu: NSObject {
 
+    /// Ventana clave en iOS 12, donde no existen las escenas y
+    /// `UIApplication.shared.windows` es la unica fuente disponible.
+    ///
+    /// Anotado como deprecado en 13.0 a proposito: eso evita que el compilador
+    /// emita el warning de deprecacion de iOS 15 en apps modernas, que nunca
+    /// ejecutan esta rama.
+    @available(iOS, introduced: 2.0, deprecated: 13.0)
+    private static func legacyKeyWindow() -> UIWindow? {
+        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })
+            ?? UIApplication.shared.windows.first
+    }
+
+    /// Devuelve el controlador mas alto de la escena activa, para presentar
+    /// encima de lo que sea que el comercio tenga arriba en vez de cerrarselo.
+    ///
+    /// Privado a proposito, y no una extension de UIViewController: el plugin
+    /// se enlaza estaticamente en la app del comercio, asi que un nombre
+    /// publico como `topMostViewController()` puede colisionar con el suyo.
+    ///
+    /// El `#available` no es decorativo: React Native 0.70 a 0.72 declaran un
+    /// piso de iOS 12.4, y `connectedScenes` es 13+. Sin el guard, esta
+    /// libreria no compila en esos proyectos. Se evita a proposito
+    /// `UIWindowScene.keyWindow`, que es 15+.
+    private static func presenter() -> UIViewController? {
+        var window: UIWindow?
+
+        if #available(iOS 13.0, *) {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+            else { return nil }
+            window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first
+        } else {
+            window = legacyKeyWindow()
+        }
+
+        guard let keyWindow = window else { return nil }
+
+        var controller = keyWindow.rootViewController
+        while let presented = controller?.presentedViewController {
+            controller = presented
+        }
+        return controller
+    }
+
     @objc(startOperation:withResolver:withRejecter:)
     func startOperation(startOperationOptions: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
 
@@ -103,41 +147,35 @@ class Khipu: NSObject {
         }
 
         DispatchQueue.main.async {
-            guard let presenter = UIApplication.shared.windows.filter({$0.isKeyWindow}).first?.rootViewController else {
-                reject("NO_OPERATION_ID", "No rootViewController found", NSError())
+            guard let presenter = Khipu.presenter() else {
+                reject("NO_PRESENTER", "No view controller available to present from", NSError())
                 return
             }
 
+            guard let operationId = startOperationOptions["operationId"] else {
+                reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
+                return
+            }
 
-            presenter.presentedViewController?.dismiss(animated: false)
-
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                guard let operationId = startOperationOptions["operationId"] else {
-                    reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
-                    return
-                }
-
-                KhipuLauncher.launch(presenter: presenter,
-                                     operationId: operationId as! String,
-                                     options: optionsBuilder.build()) { result in
-                    resolve([
-                        "operationId": result.operationId,
-                        "result": result.result,
-                        "exitTitle": result.exitTitle,
-                        "exitMessage": result.exitMessage,
-                        "exitUrl": result.exitUrl as Any,
-                        "failureReason": result.failureReason as Any,
-                        "continueUrl": result.continueUrl as Any,
-                        "events": result.events.map({ event in
-                            return [
-                                "name": event.name,
-                                "type": event.type,
-                                "timestamp": event.timestamp
-                            ]
-                        })
-                    ])
-                }
+            KhipuLauncher.launch(presenter: presenter,
+                                 operationId: operationId as! String,
+                                 options: optionsBuilder.build()) { result in
+                resolve([
+                    "operationId": result.operationId,
+                    "result": result.result,
+                    "exitTitle": result.exitTitle,
+                    "exitMessage": result.exitMessage,
+                    "exitUrl": result.exitUrl as Any,
+                    "failureReason": result.failureReason as Any,
+                    "continueUrl": result.continueUrl as Any,
+                    "events": result.events.map({ event in
+                        return [
+                            "name": event.name,
+                            "type": event.type,
+                            "timestamp": event.timestamp
+                        ]
+                    })
+                ])
             }
         }
     }

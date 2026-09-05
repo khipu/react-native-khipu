@@ -1,45 +1,31 @@
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const path = require('path');
-const escape = require('escape-string-regexp');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
-const pak = require('../package.json');
+const { getDefaultConfig } = require('@react-native/metro-config');
+const { withMetroConfig } = require('react-native-monorepo-config');
 
 const root = path.resolve(__dirname, '..');
-const modules = Object.keys({ ...pak.peerDependencies });
 
 /**
  * Metro configuration
  * https://facebook.github.io/metro/docs/configuration
  *
+ * Reemplaza la configuracion hecha a mano que teniamos, que dejo de funcionar
+ * en React Native 0.87 por dos razones distintas:
+ *
+ * - `blacklistRE` ya no existe. Metro lo mantenia como alias deprecado hasta
+ *   0.74 y no queda ni una referencia en 0.87, asi que la deduplicacion de
+ *   peerDependencies se apagaba en silencio y terminabas con dos copias de
+ *   React.
+ * - `require('metro-config/src/defaults/exclusionList')` ahora falla con
+ *   ERR_PACKAGE_PATH_NOT_EXPORTED. El archivo sigue existiendo en disco, pero
+ *   el mapa `exports` de metro-config solo expone "." y "./private/*".
+ *
+ * `withMetroConfig` hace lo mismo que haciamos a mano (watchFolders sobre la
+ * raiz, y bloquear las peerDependencies del root para que solo se cargue la
+ * copia del example) y lo mantiene alguien mas.
+ *
  * @type {import('metro-config').MetroConfig}
  */
-const config = {
-  watchFolders: [root],
-
-  // We need to make sure that only one version is loaded for peerDependencies
-  // So we block them at the root, and alias them to the versions in example's node_modules
-  resolver: {
-    blacklistRE: exclusionList(
-      modules.map(
-        (m) =>
-          new RegExp(`^${escape(path.join(root, 'node_modules', m))}\\/.*$`)
-      )
-    ),
-
-    extraNodeModules: modules.reduce((acc, name) => {
-      acc[name] = path.join(__dirname, 'node_modules', name);
-      return acc;
-    }, {}),
-  },
-
-  transformer: {
-    getTransformOptions: async () => ({
-      transform: {
-        experimentalImportSupport: false,
-        inlineRequires: true,
-      },
-    }),
-  },
-};
-
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = withMetroConfig(getDefaultConfig(__dirname), {
+  root,
+  dirname: __dirname,
+});

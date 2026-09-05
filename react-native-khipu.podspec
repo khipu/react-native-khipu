@@ -16,9 +16,32 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  s.dependency "KhipuClientIOS", "2.16.2"
-  # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.
-  # See https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79.
+  # React Native >=0.75 resuelve el SDK desde git con Swift Package Manager, lo
+  # que deja al plugin inmune al freeze del trunk de CocoaPods del 2026-12-02:
+  # todo el arbol de Khipu (KhipuClientIOS, KhenshinProtocolSwift,
+  # KhenshinSecureMessage y sus transitivas) sale de git y no del trunk.
+  #
+  # Por debajo de 0.75 el helper no existe y se cae al pod, congelado en la
+  # ultima version publicada en trunk antes de esa fecha. Esos comercios suben
+  # de React Native para recibir versiones nuevas del SDK.
+  #
+  # Ojo: el camino SPM necesita que la app llame a khipu_fix_spm_modulemaps
+  # desde su post_install. Ver ios/khipu_spm_fix.rb y el README.
+  if respond_to?(:spm_dependency, true)
+    spm_dependency(s,
+      url: "https://github.com/khipu/KhipuClientIOS.git",
+      requirement: { kind: "exactVersion", version: "2.16.5" },
+      products: ["KhipuClientIOS"]
+    )
+  else
+    s.dependency "KhipuClientIOS", "2.16.5"
+  end
+
+  # install_modules_dependencies existe desde React Native 0.71. El guard NO es
+  # decorativo: sin el, el podspec revienta con "undefined method
+  # install_modules_dependencies" en cualquier proyecto por debajo de 0.71, y
+  # peerDependencies declara react-native "*".
+  # Ver https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)
   else

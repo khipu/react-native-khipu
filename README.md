@@ -11,7 +11,15 @@ npm install react-native-khipu
 
 ## Android
 
-Add the `Khipu` repository to the allprojects section of `android/build.gradle` file, also Khipu need the kotlin gradle plugin to be, at least, version 1.9.0 and with that to be compiled against the android sdk `34` so please make sure the  `android/build.gradle` file looks like this
+Add the `Khipu` repository to the allprojects section of `android/build.gradle` file.
+
+**Khipu needs the Kotlin Gradle plugin to be at least `2.0.21`.** The Android SDK
+(`com.khipu:khipu-client-android`) is compiled with Kotlin 2.0.21 and uses the
+`org.jetbrains.kotlin.plugin.compose` plugin, which only exists from Kotlin 2.0 onwards. An older
+Kotlin cannot read that metadata, and Kotlin 1.9.x additionally fails to configure Gradle under
+JDK 21 with `Unknown Kotlin JVM target: 21`.
+
+Make sure the `android/build.gradle` file looks like this
 
 
 ```groovy
@@ -32,7 +40,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.3.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     }
 }
 
@@ -60,14 +68,102 @@ android.jetifier.ignorelist = jackson-core
 
 ## iOS
 
-Install the cocoapods dependencies
+### 1. Configure your Podfile
 
+Since version 2.15.0 the iOS SDK is resolved with Swift Package Manager instead of CocoaPods,
+because the CocoaPods trunk stopped accepting new versions on December 2nd, 2026. Add this at the
+top of your `ios/Podfile`:
+
+```ruby
+require File.join(
+  File.dirname(`node --print "require.resolve('react-native-khipu/package.json')"`),
+  "ios/khipu_spm_fix.rb"
+)
 ```
+
+and inside your `post_install`, **after** `react_native_post_install`:
+
+```ruby
+post_install do |installer|
+  react_native_post_install(installer, config[:reactNativePath])
+
+  khipu_fix_spm_modulemaps(installer)
+end
+```
+
+The order matters: `react_native_post_install` is what runs the broken rewrite this works around.
+
+This helper works around a React Native bug (present in 0.87.1) that prevents any pod whose name
+contains a hyphen from building when it consumes SPM packages. We will drop it once the fix lands
+upstream.
+
+### Xcode 26 or later is required
+
+Apple has required Xcode 26 and the iOS 26 SDK for all App Store Connect uploads since **April 28,
+2026**, so if you ship your app you are already on it. We call it out because it also decides how
+this plugin links.
+
+**On Xcode 26 you do not need `use_frameworks!`** — static linking, which is React Native's
+default, works.
+
+**On Xcode 16 static linking fails** with `duplicate symbol ... KhipuClientIOS.o`. React Native's
+own workaround for a separate Xcode 26 issue makes the pod build into the shared products
+directory, and on Xcode 16 the object ends up in the archive twice. If you are stuck on Xcode 16
+for some reason, add dynamic linkage to your `Podfile`:
+
+```ruby
+use_frameworks! :linkage => :dynamic
+```
+
+Measured on both:
+
+| | Xcode 26 | Xcode 16.4 |
+|---|---|---|
+| Static (default) | works | `duplicate symbol` |
+| `:linkage => :dynamic` | works | works |
+
+### 2. Install
+
+```sh
 cd ios
-pod install --repo-update
+pod install
 cd ..
 ```
 
+### 3. Declare the banking apps
+
+So that Khipu can open your customer's banking app, your `ios/<YourApp>/Info.plist` must declare
+these URL schemes. **This goes in your app** — having them in our example is not enough:
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>bancochilemipass2</string>
+  <string>BciPassApp</string>
+  <string>BICEPassApp</string>
+  <string>scotiabankgo</string>
+  <string>SantanderPassApp</string>
+  <string>tupass</string>
+  <string>bancoestado</string>
+  <string>itau.cl</string>
+  <string>SecurityPass</string>
+</array>
+```
+
+### If you are on React Native older than 0.75
+
+`spm_dependency` does not exist before 0.75, so the plugin falls back to CocoaPods automatically
+and you do not need the helper from step 1. The trade-off is that the SDK stays pinned at
+`KhipuClientIOS 2.16.5`, the last version published to the CocoaPods trunk. To receive newer SDK
+versions you need to upgrade React Native.
+
+
+## Locale
+
+**Send `locale` explicitly if you need a deterministic language.** The two native SDKs disagree on
+the default: on iOS it is hardcoded to `es_CL`, while on Android it follows the device language. The
+same payload without `locale` can therefore render in different languages on each platform. This is
+a difference between the native SDKs, not something the plugin decides.
 
 ## Usage
 
