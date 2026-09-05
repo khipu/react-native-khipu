@@ -18,4 +18,14 @@ buildscript {
     }
 }
 
+// El SDK de Android de Khipu vive en el Nexus de Khipu, no en Maven Central ni
+// en el repo de Google. Sin esto la resolucion falla con
+// "Could not find com.khipu:khipu-client-android". Es el mismo bloque que el
+// README le pide agregar al comercio.
+allprojects {
+    repositories {
+        maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
