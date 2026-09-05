@@ -137,7 +137,10 @@ jobs:
         with:
           path: |
             **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          # El Podfile.lock ya no menciona a KhipuClientIOS: desde 2.15.0 se
+          # resuelve por SPM y el pin vive en el podspec. Sin el podspec en la
+          # clave, subir la version del SDK no invalidaria la cache.
+          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock', 'react-native-khipu.podspec') }}
           restore-keys: |
             ${{ runner.os }}-cocoapods-
 

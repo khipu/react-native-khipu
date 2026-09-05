@@ -68,13 +68,72 @@ android.jetifier.ignorelist = jackson-core
 
 ## iOS
 
-Install the cocoapods dependencies
+### 1. Configure your Podfile
 
+Since version 2.15.0 the iOS SDK is resolved with Swift Package Manager instead of CocoaPods,
+because the CocoaPods trunk stopped accepting new versions on December 2nd, 2026. Add this at the
+top of your `ios/Podfile`:
+
+```ruby
+require File.join(
+  File.dirname(`node --print "require.resolve('react-native-khipu/package.json')"`),
+  "ios/khipu_spm_fix.rb"
+)
 ```
+
+and inside your `post_install`, **after** `react_native_post_install`:
+
+```ruby
+post_install do |installer|
+  react_native_post_install(installer, config[:reactNativePath])
+
+  khipu_fix_spm_modulemaps(installer)
+end
+```
+
+The order matters: `react_native_post_install` is what runs the broken rewrite this works around.
+
+This helper works around a React Native bug (present in 0.87.1) that prevents any pod whose name
+contains a hyphen from building when it consumes SPM packages. We will drop it once the fix lands
+upstream.
+
+**You do not need `use_frameworks!`.** Static linking, which is the default, works. Both linkage
+modes are verified.
+
+### 2. Install
+
+```sh
 cd ios
-pod install --repo-update
+pod install
 cd ..
 ```
+
+### 3. Declare the banking apps
+
+So that Khipu can open your customer's banking app, your `ios/<YourApp>/Info.plist` must declare
+these URL schemes. **This goes in your app** — having them in our example is not enough:
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>bancochilemipass2</string>
+  <string>BciPassApp</string>
+  <string>BICEPassApp</string>
+  <string>scotiabankgo</string>
+  <string>SantanderPassApp</string>
+  <string>tupass</string>
+  <string>bancoestado</string>
+  <string>itau.cl</string>
+  <string>SecurityPass</string>
+</array>
+```
+
+### If you are on React Native older than 0.75
+
+`spm_dependency` does not exist before 0.75, so the plugin falls back to CocoaPods automatically
+and you do not need the helper from step 1. The trade-off is that the SDK stays pinned at
+`KhipuClientIOS 2.16.5`, the last version published to the CocoaPods trunk. To receive newer SDK
+versions you need to upgrade React Native.
 
 
 ## Locale
