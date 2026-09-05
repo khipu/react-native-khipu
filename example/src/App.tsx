@@ -1,35 +1,62 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text, Modal } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Button, Modal } from 'react-native';
 import {
   type KhipuOptions,
   type KhipuResult,
   startOperation,
 } from 'react-native-khipu';
 
-// Harness de verificación del presenter.
-//
-// Dos cosas se miden acá, y ninguna requiere mirar capturas a ojo:
-//
-// 1. ¿Sobrevive el modal del comercio? La <Modal> de React Native dispara
-//    onDismiss en iOS cuando algo la cierra. Si el plugin la cierra para
-//    presentar Khipu, ese evento se dispara y queda en el log de Metro. Es la
-//    señal exacta del bug, sin ambigüedad.
-//
-// 2. ¿Cuánto tarda en aparecer Khipu? La vista raíz se pinta magenta sólido y
-//    el modal es una tarjeta verde encima. Los tres estados posibles (magenta
-//    con tarjeta / magenta sola / UI de Khipu) tienen tamaños de PNG bien
-//    distintos, así que el instante de cada transición sale del tamaño del
-//    archivo.
-const OPERATION_ID = 'a8klrrvmwtg9';
+// Rellena esto localmente con un operationId real para que el harness arranque
+// solo. Dejalo vacio antes de commitear: un operationId es el dato de una
+// operacion, no configuracion del repo. Con el vacio, la app muestra el campo
+// de texto y se comporta como el ejemplo de siempre.
+const OPERATION_ID = '';
 
+// Harness de verificacion del presenter.
+//
+// Dos cosas se miden aca, y ninguna requiere mirar capturas a ojo:
+//
+// 1. Sobrevive el modal del comercio? Se usa el <Modal> de react-native a
+//    proposito, no un overlay con un View absoluto: <Modal> presenta un
+//    UIViewController nativo (RCTModalHostView llama a present), que es lo que
+//    deja al root presentando y reproduce el bug. Un View absoluto vive en la
+//    misma jerarquia de vistas y NO lo reproduce.
+//
+// 2. Cuanto tarda en aparecer Khipu? La raiz se pinta magenta y cambia a negro
+//    en el instante exacto de la llamada; el modal es una tarjeta verde encima.
+//    Cada estado tiene un tamano de PNG bien distinto, asi que el instante de
+//    cada transicion sale del tamano del archivo sin abrir ninguna captura.
 export default function App() {
   const [result, setResult] = React.useState<KhipuResult | undefined>();
+  const [id, setId] = React.useState<string>(OPERATION_ID);
   const [modalUp, setModalUp] = React.useState(false);
   const [started, setStarted] = React.useState(false);
-  const [modalKilled, setModalKilled] = React.useState(false);
 
+  const launch = React.useCallback((operationId: string) => {
+    console.log('HARNESS calling-start');
+    startOperation({
+      operationId,
+      options: {
+        title: 'Harness',
+        locale: 'es_CL',
+        theme: 'light',
+        showFooter: true,
+        showPaymentDetails: true,
+      } as KhipuOptions,
+    })
+      .then((r) => {
+        console.log('HARNESS resolved', r.result);
+        setResult(r);
+      })
+      .catch((e) => console.log('HARNESS rejected', String(e)));
+  }, []);
+
+  // Auto-arranque solo si hay un operationId compilado.
   React.useEffect(() => {
+    if (!OPERATION_ID) {
+      return;
+    }
     const t = setTimeout(() => setModalUp(true), 1500);
     return () => clearTimeout(t);
   }, []);
@@ -43,55 +70,56 @@ export default function App() {
     if (!started) {
       return;
     }
-    const raf = requestAnimationFrame(() => {
-      console.log('HARNESS calling-start');
-      startOperation({
-        operationId: OPERATION_ID,
-        options: {
-          title: 'Harness',
-          locale: 'es_CL',
-          theme: 'light',
-          showFooter: true,
-          showPaymentDetails: true,
-        } as KhipuOptions,
-      })
-        .then((r) => {
-          console.log('HARNESS resolved', r.result);
-          setResult(r);
-        })
-        .catch((e) => console.log('HARNESS rejected', String(e)));
-    });
+    const raf = requestAnimationFrame(() => launch(OPERATION_ID));
     return () => cancelAnimationFrame(raf);
-  }, [started]);
+  }, [started, launch]);
+
+  if (OPERATION_ID) {
+    return (
+      <View style={started ? styles.rootStarted : styles.root}>
+        <Modal
+          visible={modalUp}
+          transparent={true}
+          animationType="none"
+          onShow={onModalShown}
+          // Si esto se dispara, el plugin cerro el modal del comercio.
+          onDismiss={() => console.log('HARNESS modal-dismissed')}
+          onRequestClose={() => {}}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.card} />
+          </View>
+        </Modal>
+      </View>
+    );
+  }
 
   return (
-    <View style={started ? styles.rootStarted : styles.root}>
-      <Text style={styles.hidden}>{result?.result ?? ''}</Text>
-      <Text style={styles.hidden}>{modalKilled ? 'KILLED' : 'ALIVE'}</Text>
-      <Modal
-        visible={modalUp}
-        transparent={true}
-        animationType="none"
-        onShow={onModalShown}
-        onDismiss={() => {
-          // Si esto se dispara, el plugin cerró el modal del comercio.
-          console.log('HARNESS modal-dismissed');
-          setModalKilled(true);
-        }}
-        onRequestClose={() => {}}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.card} />
-        </View>
-      </Modal>
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        onChangeText={setId}
+        value={id}
+        placeholder="operationId"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <Button title="Start" onPress={() => launch(id)} />
+      <Text>result: {result?.result}</Text>
+      <Text>exitTitle: {result?.exitTitle}</Text>
+      <Text>exitMessage: {result?.exitMessage}</Text>
+      <Text>exitUrl: {result?.exitUrl}</Text>
+      <Text>failureReason: {result?.failureReason}</Text>
+      <Text>continueUrl: {result?.continueUrl}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 8 },
+  input: { borderWidth: 1, borderColor: '#999', padding: 10, borderRadius: 6 },
   root: { flex: 1, backgroundColor: '#FF00FF' },
   rootStarted: { flex: 1, backgroundColor: '#000000' },
-  hidden: { opacity: 0, height: 1 },
   modalBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { width: 240, height: 240, backgroundColor: '#00C853' },
 });
