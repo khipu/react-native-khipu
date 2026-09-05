@@ -1,5 +1,36 @@
 # Changelog
 
+## 3.0.1
+
+### Corrige un bug de 3.0.0 que rompía el build en algunas versiones de React Native
+
+Si actualizaste a `3.0.0` y tu build de iOS empezó a fallar con
+`module map file ... not found`, **era culpa nuestra** y esta versión lo corrige.
+No tienes que cambiar nada en tu `Podfile`: basta con actualizar.
+
+El helper `khipu_fix_spm_modulemaps` reescribía la referencia al modulemap de
+todos los pods, sin comprobar si React Native realmente lo necesitaba. React
+Native tiene dos caminos según cómo quede el pod, y solo uno requiere la
+corrección; en el otro, reescribir apuntaba a un archivo inexistente y rompía un
+build que funcionaba.
+
+Verificado instalando desde npm en apps limpias:
+
+| React Native | Con 3.0.0 | Con 3.0.1 |
+| --- | --- | --- |
+| 0.75 | falla | **compila** |
+| 0.85 | falla | **compila** |
+| 0.87 | compila | **compila** |
+
+El helper ahora también informa lo que hace durante `pod install`, para que un
+problema así no vuelva a pasar inadvertido:
+
+```
+[Khipu] Ningun pod fue aplanado por spm.rb; no hay modulemaps que corregir.
+[Khipu] Corrigiendo la referencia al modulemap de: react-native-khipu
+```
+
+
 ## 3.0.0
 
 ### ⚠️ Acción requerida en React Native ≥ 0.75
