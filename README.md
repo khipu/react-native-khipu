@@ -11,7 +11,15 @@ npm install react-native-khipu
 
 ## Android
 
-Add the `Khipu` repository to the allprojects section of `android/build.gradle` file, also Khipu need the kotlin gradle plugin to be, at least, version 1.9.0 and with that to be compiled against the android sdk `34` so please make sure the  `android/build.gradle` file looks like this
+Add the `Khipu` repository to the allprojects section of `android/build.gradle` file.
+
+**Khipu needs the Kotlin Gradle plugin to be at least `2.0.21`.** The Android SDK
+(`com.khipu:khipu-client-android`) is compiled with Kotlin 2.0.21 and uses the
+`org.jetbrains.kotlin.plugin.compose` plugin, which only exists from Kotlin 2.0 onwards. An older
+Kotlin cannot read that metadata, and Kotlin 1.9.x additionally fails to configure Gradle under
+JDK 21 with `Unknown Kotlin JVM target: 21`.
+
+Make sure the `android/build.gradle` file looks like this
 
 
 ```groovy
@@ -32,7 +40,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.3.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     }
 }
 
@@ -68,6 +76,13 @@ pod install --repo-update
 cd ..
 ```
 
+
+## Locale
+
+**Send `locale` explicitly if you need a deterministic language.** The two native SDKs disagree on
+the default: on iOS it is hardcoded to `es_CL`, while on Android it follows the device language. The
+same payload without `locale` can therefore render in different languages on each platform. This is
+a difference between the native SDKs, not something the plugin decides.
 
 ## Usage
 
