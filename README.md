@@ -97,8 +97,30 @@ This helper works around a React Native bug (present in 0.87.1) that prevents an
 contains a hyphen from building when it consumes SPM packages. We will drop it once the fix lands
 upstream.
 
-**You do not need `use_frameworks!`.** Static linking, which is the default, works. Both linkage
-modes are verified.
+### Xcode 26 or later is required
+
+Apple has required Xcode 26 and the iOS 26 SDK for all App Store Connect uploads since **April 28,
+2026**, so if you ship your app you are already on it. We call it out because it also decides how
+this plugin links.
+
+**On Xcode 26 you do not need `use_frameworks!`** — static linking, which is React Native's
+default, works.
+
+**On Xcode 16 static linking fails** with `duplicate symbol ... KhipuClientIOS.o`. React Native's
+own workaround for a separate Xcode 26 issue makes the pod build into the shared products
+directory, and on Xcode 16 the object ends up in the archive twice. If you are stuck on Xcode 16
+for some reason, add dynamic linkage to your `Podfile`:
+
+```ruby
+use_frameworks! :linkage => :dynamic
+```
+
+Measured on both:
+
+| | Xcode 26 | Xcode 16.4 |
+|---|---|---|
+| Static (default) | works | `duplicate symbol` |
+| `:linkage => :dynamic` | works | works |
 
 ### 2. Install
 
