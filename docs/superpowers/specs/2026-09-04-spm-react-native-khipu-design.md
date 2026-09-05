@@ -573,12 +573,20 @@ puede.
 
 1. **Regresión CocoaPods, camino nuevo** — `pod install` + build del example en 0.87.1 con
    linking estático. Debe pasar con el helper aplicado.
-2. **Linking dinámico** — repetir con `USE_FRAMEWORKS=dynamic`. **No se sondeó**; se espera que
-   funcione y que además evite el bug del §4 por tomar otra rama de `spm.rb`, pero hay que
-   comprobarlo. Si falla, es un hallazgo nuevo y hay que documentarlo en el README.
+2. **Linking dinámico** — ✅ **medido**. `USE_FRAMEWORKS=dynamic pod install` + build:
+   `** BUILD SUCCEEDED **`. Y confirma la hipótesis de por qué esquiva el bug del §4: el output de
+   `pod install` **no** trae la línea *"Building react-native-khipu into the shared products dir"*,
+   porque con enlazado dinámico el pod no es una librería estática y `spm.rb` no aplana su build
+   dir. Sin aplanado no hay reescritura de modulemap, y sin reescritura no hay `gsub` roto. Los dos
+   caminos de linking funcionan.
 3. **Fallback sin `spm_dependency`** — verificar que la rama `else` del podspec resuelve. Se
    puede forzar con un RN 0.74 o simulando que el helper no existe.
-4. `pod lib lint react-native-khipu.podspec --configuration=Debug --skip-tests`
+4. ~~`pod lib lint`~~ — **no es aplicable y nunca lo fue.** Falla con
+   `undefined local variable or method 'min_ios_version_supported'`, porque ese helper solo existe
+   dentro del contexto de un Podfile de React Native. El podspec original (`02ebe91`) usaba la
+   misma línea, así que esto no es una regresión de la migración: `pod lib lint` simplemente no
+   sirve para validar una librería RN que use los helpers de RN. Sustituido por el `pod install` +
+   build del example, que sí ejercita el podspec en su contexto real.
 5. **Pago real bajo SPM** con render de fuentes, colores e imágenes. Los pasos 1-4 prueban que
    compila; **este prueba que funciona**. Builds normales, nunca `--no-codesign`.
 6. **El presenter, con un modal arriba.** Levantar un modal propio en el example y llamar
