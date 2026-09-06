@@ -1,5 +1,72 @@
 # Changelog
 
+## 3.0.2
+
+### Requisitos de Android que faltaban en la documentación
+
+Esta versión es principalmente documentación. Si `3.0.1` te funciona, **no
+necesitas actualizar**: no hay cambios de comportamiento en las versiones de
+React Native donde ya andaba.
+
+Lo que sí cambia es que ahora el README advierte tres cosas que antes te
+enterabas al chocar contra un error que no menciona a Khipu por ningún lado.
+
+**`compileSdk` 34 o superior.** El SDK de Android arrastra Jetpack Compose
+1.7.6, que exige que quien lo consume compile contra API 34 o posterior. Con
+menos, el build falla en `:app:checkDebugAarMetadata`.
+
+**El paso de jetifier no es opcional en React Native ≤ 0.74.** Ya estaba
+documentado, pero redactado como "si usas jetifier" — y resulta que esos
+templates lo traen activo de fábrica. Sin la línea en `android/gradle.properties`
+el build falla así:
+
+```
+Failed to transform jackson-core-2.15.2.jar using Jetifier.
+Reason: IllegalArgumentException, message: Unsupported class file major version 63
+```
+
+```
+android.jetifier.ignorelist = jackson-core
+```
+
+Verificado en React Native 0.74.7: agregar esa línea es el único cambio que hace
+pasar el build.
+
+**React Native 0.72 no está soportado en Android.** En iOS funciona. En Android
+no, y no es algo que podamos arreglar: llegar al `compileSdk` que exige Compose
+requiere un Android Gradle Plugin más nuevo, que requiere Gradle 8.9, y el
+gradle-plugin de React Native 0.72 no compila ahí. Lo verificamos con
+`react-native-khipu` desinstalado y el build falla igual.
+
+Si estás en 0.72 y publicas en Google Play, de todas formas necesitas subir de
+React Native: desde el **31 de agosto de 2026** Play exige `targetSdk 36`, que
+una app en 0.72 no puede alcanzar por la misma cadena.
+
+### Un arreglo de build defensivo
+
+El módulo de Android no fijaba el `jvmTarget` de Kotlin, así que tomaba por
+defecto la versión del JDK de quien compilara. React Native fija el de Java por
+su cuenta —11 en 0.72, 17 desde 0.73—, y cuando no coinciden el build falla con
+`Inconsistent JVM-target compatibility detected`. En los templates modernos
+coincidían por casualidad.
+
+Ahora el plugin sigue al Java que aplique React Native, en vez de depender del
+JDK del entorno. **No cambia nada si tu build ya funcionaba.**
+
+### Verificado con pagos reales
+
+A diferencia de versiones anteriores, esta se midió levantando un pago de verdad
+en pantalla, no solo compilando:
+
+| React Native | iOS | Android |
+| --- | --- | --- |
+| 0.74, 0.75, 0.76, 0.80, 0.83, 0.85, 0.87 | pago | pago |
+| 0.72 | pago | no compila |
+
+Cada casilla es una app recién creada, con el paquete instalado desde npm y
+siguiendo la documentación pública.
+
+
 ## 3.0.1
 
 ### Corrige un bug de 3.0.0 que rompía el build en algunas versiones de React Native
