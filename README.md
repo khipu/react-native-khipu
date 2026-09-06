@@ -13,6 +13,12 @@ npm install react-native-khipu
 
 Add the `Khipu` repository to the allprojects section of `android/build.gradle` file.
 
+**Khipu needs `compileSdk` 34 or higher.** The Android SDK pulls in Jetpack Compose 1.7.6,
+which requires its consumers to compile against API 34 or later. On a lower `compileSdk` the build
+fails at `:app:checkDebugAarMetadata` with `Dependency 'androidx.compose.ui:ui-android:1.7.6'
+requires libraries and applications that depend on it to compile against version 34 or later`.
+This matters mostly for older React Native templates: 0.72 ships `compileSdk 33`.
+
 **Khipu needs the Kotlin Gradle plugin to be at least `2.0.21`.** The Android SDK
 (`com.khipu:khipu-client-android`) is compiled with Kotlin 2.0.21 and uses the
 `org.jetbrains.kotlin.plugin.compose` plugin, which only exists from Kotlin 2.0 onwards. An older
@@ -64,6 +70,30 @@ If you are using jetifier please exclude the `jackson-core` package from it in t
 ```
 android.jetifier.ignorelist = jackson-core
 ```
+
+**React Native templates up to 0.74 enable jetifier by default**, so this step applies to them
+even if you never turned jetifier on yourself. Without it the build fails at
+`:app:desugarDebugFileDependencies` with `Failed to transform jackson-core-2.15.2.jar using
+Jetifier. Reason: IllegalArgumentException, message: Unsupported class file major version 63` —
+an error that mentions neither Khipu nor jetifier. Verified on React Native 0.74.7: adding the
+line above is the only change needed to make that build pass.
+
+### React Native 0.72 is not supported on Android
+
+React Native 0.72 builds and runs payments on iOS, but **not on Android**. Its template caps out
+below what this plugin needs, and raising it is blocked by React Native itself:
+
+- `compileSdk 33` is below the 34 that Compose 1.7.6 requires (see above).
+- Raising `compileSdk` past 33 needs a newer Android Gradle plugin, which needs Gradle 8.9+.
+- React Native 0.72's own `@react-native/gradle-plugin` does not compile on Gradle 8.5 or later:
+  it imports `org.gradle.configurationcache.extensions.serviceOf`, which Gradle removed. We
+  verified this **with `react-native-khipu` uninstalled** — the failure is identical, so it is not
+  ours to fix.
+
+Note that this is not only a Khipu limitation. Since **August 31, 2026** Google Play requires new
+apps and updates to target API 36, and by the same chain a React Native 0.72 app cannot reach that
+target. If you are on 0.72 and ship to Google Play, you need to upgrade React Native regardless of
+Khipu.
 
 
 ## iOS
