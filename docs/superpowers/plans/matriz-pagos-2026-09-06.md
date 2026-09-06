@@ -26,9 +26,11 @@ Un solo `operationId` reutilizado en todas.
 | 0.76.9 | SPM | ✅ pago (`fmt`) | ✅ pago | 2.16.5 | 2.27.0 | 126 MB |
 | 0.75.5 | SPM | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 69 MB |
 | 0.74.7 | pod | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 62 MB |
+| 0.73.11 | pod | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 39 MB |
 | 0.72.17 | pod | ✅ pago (Yoga) | ❌ **no compila** | 2.16.5 | — | — |
 
-**Siete de ocho versiones levantan un pago real en las dos plataformas.** La única falla es
+**Ocho de nueve versiones levantan un pago real en las dos plataformas.** 0.73.11 se midió el
+mismo día contra `3.0.2`, para fijar el piso real del soporte; las otras ocho contra `3.0.1`. La única falla es
 Android en 0.72, analizada abajo.
 
 En la rama SPM se resolvieron los tres paquetes: `KhipuClientIOS 2.16.5`,
@@ -117,6 +119,26 @@ desde 0.73—, y cuando no coinciden el build falla.
 En los templates modernos coincidía por casualidad. Se corrige resolviéndolo en `afterEvaluate`,
 leyendo lo que React Native haya aplicado, en vez de fijar un número que rompería la otra punta
 del rango soportado.
+
+## En RN 0.73 el `kotlinVersion` del `ext` es decorativo
+
+Hallazgo de la medición de 0.73.11, y vale para la documentación. El template declara
+
+```groovy
+ext { kotlinVersion = "1.8.0" }
+dependencies { classpath("org.jetbrains.kotlin:kotlin-gradle-plugin") }   // sin version
+```
+
+o sea que la version del plugin de Kotlin **la resuelve React Native**, no el `ext`. Subir
+`kotlinVersion` —que es el reflejo natural, y lo que dice el texto de la doc— no tiene ningun
+efecto: el modulo sigue compilando con Kotlin 1.8 y falla al leer la metadata 2.0.0 del SDK
+Android con `The binary version of its metadata is 2.0.0, expected version is 1.8.0`.
+
+Lo que funciona es poner la version explicita en el `classpath`, que es lo que el ejemplo del
+README ya mostraba sin decirlo. Con eso, 0.73.11 levanta el pago.
+
+Primero medimos 0.73 con el parche subiendo solo el `ext` y lo registramos como falla. Era un
+error del arnes, no del plugin: la instruccion de la doc no se habia aplicado de verdad.
 
 ## Casillas abiertas
 
