@@ -97,30 +97,83 @@ This helper works around a React Native bug (present in 0.87.1) that prevents an
 contains a hyphen from building when it consumes SPM packages. We will drop it once the fix lands
 upstream.
 
-### Xcode 26 or later is required
+### Xcode 26 is required
 
 Apple has required Xcode 26 and the iOS 26 SDK for all App Store Connect uploads since **April 28,
-2026**, so if you ship your app you are already on it. We call it out because it also decides how
-this plugin links.
+2026**, so if you ship your app you are already on it.
 
-**On Xcode 26 you do not need `use_frameworks!`** — static linking, which is React Native's
-default, works.
+**You do not need `use_frameworks!`.** Static linking, which is React Native's default, works on
+Xcode 26.
 
-**On Xcode 16 static linking fails** with `duplicate symbol ... KhipuClientIOS.o`. React Native's
-own workaround for a separate Xcode 26 issue makes the pod build into the shared products
-directory, and on Xcode 16 the object ends up in the archive twice. If you are stuck on Xcode 16
-for some reason, add dynamic linkage to your `Podfile`:
+> On Xcode 16 static linking fails with `duplicate symbol ... KhipuClientIOS.o`, because React
+> Native's workaround for a separate Xcode 26 issue makes the pod build into the shared products
+> directory and the object ends up in the archive twice. Xcode 16 can no longer be used for App
+> Store uploads, but if you are on it for some other reason, add
+> `use_frameworks! :linkage => :dynamic` to your `Podfile`. Both linkage modes are verified on
+> both Xcode versions.
 
-```ruby
-use_frameworks! :linkage => :dynamic
+### Known React Native build issues on recent Xcode 26 releases
+
+Some React Native versions do not build with recent Xcode 26 releases — **with or without this
+plugin**. These are React Native bugs; we list them because you will hit them while integrating
+Khipu and the error messages point nowhere useful. Each was verified by uninstalling
+`react-native-khipu` and confirming the build fails identically.
+
+**All the results below were measured on Xcode 26.6.** We did not test earlier Xcode 26 releases,
+so treat the "no" rows as "fails on 26.6" rather than as a claim about every Xcode 26.
+
+| React Native | Builds on Xcode 26.6 | If not, why | Workaround |
+|---|---|---|---|
+| 0.72 | no | Yoga, `YGValue.h` | see below |
+| 0.74, 0.75 | yes | — | — |
+| 0.76, 0.80 | no | `fmt`, `format-inl.h` | see below |
+| 0.83, 0.85, 0.87 | yes | — | — |
+
+#### `fmt` — measured on React Native 0.76 and 0.80
+
+```
+Pods/fmt/include/fmt/format-inl.h: error: call to consteval function
+'fmt::basic_format_string<...>' is not a constant expression
 ```
 
-Measured on both:
+Xcode's Clang tightened how it validates C++20 `consteval`, and the `fmt` version React Native
+vendors does not satisfy it — [facebook/react-native#55601](https://github.com/facebook/react-native/issues/55601),
+where it is reported against **Xcode 26.4 and later**. We measured it on 26.6 and did not test
+earlier releases, so if you are on Xcode 26.0–26.3 you may not be affected.
+**Fixed in React Native 0.84+**, which bumps `fmt`. We measured this on 0.76 and 0.80; 0.83 and
+later build fine. Until you can upgrade, compile `fmt` as C++17 in your `post_install`:
 
-| | Xcode 26 | Xcode 16.4 |
-|---|---|---|
-| Static (default) | works | `duplicate symbol` |
-| `:linkage => :dynamic` | works | works |
+```ruby
+installer.pods_project.targets.each do |t|
+  next unless t.name == 'fmt'
+  t.build_configurations.each do |c|
+    c.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+  end
+end
+```
+
+> Several community guides suggest defining `FMT_CONSTEVAL=` instead. **That does not work** — we
+> verified the define reaches the `pbxproj` and the build still fails. Use the C++17 setting.
+
+#### Yoga — measured on React Native 0.72
+
+```
+ReactCommon/yoga/yoga/YGValue.h: error: identifier '_pt' preceded by whitespace in a
+literal operator declaration is deprecated [-Werror,-Wdeprecated-literal-operator]
+```
+
+Xcode's Clang treats that deprecation as an error. Measured on Xcode 26.6. In your `post_install`:
+
+```ruby
+installer.pods_project.targets.each do |t|
+  t.build_configurations.each do |c|
+    f = c.build_settings['OTHER_CPLUSPLUSFLAGS'] || ['$(inherited)']
+    f = [f] unless f.is_a?(Array)
+    f << '-Wno-deprecated-literal-operator' unless f.include?('-Wno-deprecated-literal-operator')
+    c.build_settings['OTHER_CPLUSPLUSFLAGS'] = f
+  end
+end
+```
 
 ### 2. Install
 
