@@ -82,6 +82,21 @@ android {
   }
 }
 
+// El plugin de Gradle de React Native fija el target de Java de este modulo por
+// encima del compileOptions de arriba: 11 en RN 0.72, 17 desde 0.73. Si no
+// fijamos ademas el de Kotlin, este toma por defecto la version del JDK de quien
+// compila y el build falla con "Inconsistent JVM-target compatibility detected".
+// Medido en RN 0.72.17 con JDK 17: Java quedaba en 11 y Kotlin en 17.
+// Por eso se resuelve en afterEvaluate, cuando React Native ya aplico el suyo,
+// en vez de fijar un numero que romperia la otra punta del rango soportado.
+afterEvaluate {
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+      jvmTarget = android.compileOptions.targetCompatibility.toString()
+    }
+  }
+}
+
 repositories {
   mavenCentral()
   google()
