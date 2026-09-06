@@ -4,7 +4,7 @@
 **Plugin:** `react-native-khipu@3.0.1` instalado **desde npm**
 **Entorno:** Xcode 26.6, macOS arm64, CocoaPods 1.16.2
 
-Nueve versiones de React Native, cada una en una app recién creada, instalando el paquete
+Ocho versiones de React Native, cada una en una app recién creada, instalando el paquete
 publicado y siguiendo **solo el README** — sin usar nada sabido por trabajar en el repo. Esa
 restricción es deliberada: la app de ejemplo del repo hereda `metro.config.js`,
 `babel.config.js` y `react-native.config.js`, y por eso esconde justo los pasos que al comercio
@@ -23,7 +23,7 @@ le faltan.
 | 0.85.0 | SPM | ✅ | ✅ | — | — |
 | 0.87.1 | SPM | ✅ | ✅ | — | — |
 
-**En las nueve, `pod install` y la rama del podspec funcionaron correctamente.** El corte pod/SPM
+**En las ocho, `pod install` y la rama del podspec funcionaron correctamente.** El corte pod/SPM
 cae donde debe: `spm_dependency` existe desde RN 0.75.
 
 ## Los dos bugs de React Native
@@ -96,8 +96,9 @@ sola versión de RN.
 
 ## Casillas abiertas
 
-- **Ningún pago se ejerció en runtime** en esta matriz, solo builds. El pago está verificado
-  aparte, en el example sobre 0.74 y 0.87.
-- **Android no se barrió por versión.** Verificado solo en el example sobre 0.87.1.
+- ~~**Ningún pago se ejerció en runtime**~~ y ~~**Android no se barrió por versión**~~ — ambas
+  cerradas el 2026-09-06 por [`matriz-pagos-2026-09-06.md`](matriz-pagos-2026-09-06.md), que midió
+  un pago real en las dos plataformas versión por versión. Resultado: 7 de 8; **Android en 0.72 no
+  compila**, por una cadena de cuatro bloqueos que ese documento detalla.
 - **`openApp` sigue sin verificarse en dispositivo físico** en ninguna de las cuatro
   integraciones de Khipu.
