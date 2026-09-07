@@ -1,6 +1,9 @@
 # Changelog
 
-## 3.0.4
+## 3.0.5
+
+> `3.0.4` se publicó por error en el mismo intento y tiene **contenido idéntico** a `3.0.5`:
+> la única diferencia es el número de versión. Si instalaste `3.0.4` no te falta nada.
 
 ### Corrige el rango de versiones afectadas por el problema de `fmt`
 
