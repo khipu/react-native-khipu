@@ -349,6 +349,17 @@ const result: KhipuResult = await startOperation({
 })
 ```
 
+### A note on types
+
+Optional fields are now declared with `?`, so you can just leave out the ones you do not use
+instead of passing `undefined`. The `as KhipuOptions` / `as KhipuColors` casts above are no longer
+necessary either, though they keep working.
+
+`result` is now a plain `string` instead of a fixed union of literals, so your build will not break
+the day the backend adds a new value. Checks like `result === 'OK'` behave exactly as before. The
+only code worth revisiting is a variable you had annotated with the old literal union: widen it to
+`string`.
+
 ## Contributing
 
 See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
