@@ -1,5 +1,41 @@
 # Changelog
 
+## 3.0.4
+
+### Corrige el rango de versiones afectadas por el problema de `fmt`
+
+**Si estás en React Native 0.83.2, 0.83.3 o 0.83.4, esta corrección te importa.**
+La versión anterior de esta documentación decía que el problema de `fmt` en iOS
+afecta a "0.76 hasta 0.83.1", y eso dejaba tu versión fuera de la lista. Sí está
+afectada, y el ajuste de C++17 te hace falta.
+
+El rango correcto es **0.76.9 hasta 0.83.4**.
+
+| React Native | ¿Afectada? |
+| --- | --- |
+| 0.76.8 y anteriores | no |
+| **0.76.9 – 0.83.4** | **sí** |
+| 0.83.5 y posteriores | no |
+| 0.84 y posteriores | no |
+
+Los dos extremos estaban mal, y por el mismo motivo: dimos por representativa de
+toda la línea menor la única versión que habíamos compilado de ella. En 0.76 esa
+versión fue justamente `0.76.9`, que es donde `fmt` sube a 11.0.2 — los patches
+`0.76.0` a `0.76.8` traen la versión anterior y nunca estuvieron afectados.
+
+Esta vez los bordes no se deducen: leímos la versión de `fmt` declarada en cada
+release publicada de React Native, una por una.
+
+El error del borde inferior era inofensivo — aplicabas un ajuste que no
+necesitabas. El del borde superior no: si estás en `0.83.3`, la documentación te
+decía que no te correspondía el ajuste y tu build fallaba igual.
+
+### Sin cambios de código
+
+Como `3.0.2` y `3.0.3`, esta versión es solo documentación. Si tu build funciona,
+no necesitas actualizar.
+
+
 ## 3.0.3
 
 ### Documentación de Android, otra vez — y esta corrige un error nuestro
