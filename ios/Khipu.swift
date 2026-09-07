@@ -3,29 +3,27 @@ import KhipuClientIOS
 @objc(KhipuImpl)
 public class KhipuImpl: NSObject {
 
-    /// Ventana clave en iOS 12, donde no existen las escenas y
-    /// `UIApplication.shared.windows` es la unica fuente disponible.
+    /// Key window on iOS 12, where scenes do not exist and
+    /// `UIApplication.shared.windows` is the only source.
     ///
-    /// Anotado como deprecado en 13.0 a proposito: eso evita que el compilador
-    /// emita el warning de deprecacion de iOS 15 en apps modernas, que nunca
-    /// ejecutan esta rama.
+    /// Marked deprecated in 13.0 on purpose, so modern apps that never take
+    /// this branch do not get the iOS 15 deprecation warning.
     @available(iOS, introduced: 2.0, deprecated: 13.0)
     private static func legacyKeyWindow() -> UIWindow? {
         return UIApplication.shared.windows.first(where: { $0.isKeyWindow })
             ?? UIApplication.shared.windows.first
     }
 
-    /// Devuelve el controlador mas alto de la escena activa, para presentar
-    /// encima de lo que sea que el comercio tenga arriba en vez de cerrarselo.
+    /// Topmost controller of the active scene, so we present on top of
+    /// whatever the merchant has up instead of dismissing it.
     ///
-    /// Privado a proposito, y no una extension de UIViewController: el plugin
-    /// se enlaza estaticamente en la app del comercio, asi que un nombre
-    /// publico como `topMostViewController()` puede colisionar con el suyo.
+    /// Private and not a UIViewController extension on purpose: the plugin is
+    /// statically linked into the merchant app, so a public name like
+    /// `topMostViewController()` could collide with theirs.
     ///
-    /// El `#available` no es decorativo: React Native 0.70 a 0.72 declaran un
-    /// piso de iOS 12.4, y `connectedScenes` es 13+. Sin el guard, esta
-    /// libreria no compila en esos proyectos. Se evita a proposito
-    /// `UIWindowScene.keyWindow`, que es 15+.
+    /// The `#available` is load-bearing: RN 0.70-0.72 declare an iOS 12.4
+    /// floor and `connectedScenes` is 13+. `UIWindowScene.keyWindow` is
+    /// deliberately avoided, being 15+.
     private static func presenter() -> UIViewController? {
         var window: UIWindow?
 
