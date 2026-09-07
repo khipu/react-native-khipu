@@ -1,7 +1,7 @@
 import KhipuClientIOS
 
-@objc(Khipu)
-class Khipu: NSObject {
+@objc(KhipuImpl)
+public class KhipuImpl: NSObject {
 
     /// Ventana clave en iOS 12, donde no existen las escenas y
     /// `UIApplication.shared.windows` es la unica fuente disponible.
@@ -47,8 +47,10 @@ class Khipu: NSObject {
         return controller
     }
 
-    @objc(startOperation:withResolver:withRejecter:)
-    func startOperation(startOperationOptions: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc
+    public func startOperation(_ startOperationOptions: NSDictionary,
+                               resolve: @escaping RCTPromiseResolveBlock,
+                               reject: @escaping RCTPromiseRejectBlock) -> Void {
 
         var optionsBuilder = KhipuOptions.Builder()
 
@@ -147,7 +149,7 @@ class Khipu: NSObject {
         }
 
         DispatchQueue.main.async {
-            guard let presenter = Khipu.presenter() else {
+            guard let presenter = KhipuImpl.presenter() else {
                 reject("NO_PRESENTER", "No view controller available to present from", NSError())
                 return
             }
