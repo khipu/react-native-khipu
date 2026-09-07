@@ -25,7 +25,14 @@ export type KhipuOptions = {
   showFooter?: boolean;
   showMerchantLogo?: boolean;
   showPaymentDetails?: boolean;
-  theme?: 'light' | 'dark' | 'system';
+  /**
+   * Valid values are 'light' | 'dark' | 'system', but this is `string` on
+   * purpose: RN 0.75.5's ObjC++ codegen generator aborts `pod install` with
+   * "Union types are unsupported in structs". The union survives for merchants
+   * in the public type exported from `src/index.tsx`; codegen alone reads this
+   * file.
+   */
+  theme?: string;
   colors?: KhipuColors;
 };
 

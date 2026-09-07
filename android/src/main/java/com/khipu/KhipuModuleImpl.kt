@@ -18,8 +18,18 @@ import kotlin.Int
 import kotlin.String
 import kotlin.let
 
-
-class KhipuModule(reactContext: ReactApplicationContext) : NativeKhipuSpec(reactContext) {
+/**
+ * All module logic, once, with no architecture coupling.
+ *
+ * Lives in the `main` source set, compiled under both architectures. Only the
+ * module *declaration* is duplicated, in `src/newarch/java` and
+ * `src/oldarch/java`; both delegate here.
+ *
+ * This class must reference neither the generated spec (new architecture only)
+ * nor a React base class (that would pin it to one hierarchy), which is why it
+ * stands alone instead of being a superclass.
+ */
+class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
 
   private var startOperationPromise: Promise? = null
 
@@ -71,9 +81,9 @@ class KhipuModule(reactContext: ReactApplicationContext) : NativeKhipuSpec(react
     reactContext.addActivityEventListener(activityEventListener)
   }
 
-  override fun startOperation(operationOptions: ReadableMap, promise: Promise) {
+  fun startOperation(operationOptions: ReadableMap, promise: Promise) {
 
-    val activity = reactApplicationContext.currentActivity
+    val activity = reactContext.currentActivity
 
     if (activity == null) {
       promise.reject(NO_AVAILABLE_VIEW, "Activity doesn't exist")
@@ -140,6 +150,13 @@ class KhipuModule(reactContext: ReactApplicationContext) : NativeKhipuSpec(react
   }
 
   companion object {
+    /**
+     * The name lives here rather than on `KhipuModule`: under the new
+     * architecture that class inherits a static `NAME` from the generated
+     * spec and under the old one it inherits nothing, so `KhipuModule.NAME`
+     * would resolve differently per architecture. `KhipuPackage` always
+     * references this constant.
+     */
     const val NAME = "Khipu"
     const val START_OPERATION_REQUEST = 10010101
     const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"

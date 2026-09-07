@@ -1,21 +1,20 @@
 #import "Khipu.h"
 
+#ifdef RCT_NEW_ARCH_ENABLED
+
 #import <memory>
 
 #import "react_native_khipu-Swift.h"
 
-// El struct que emite codegen es una vista de solo lectura sobre el
-// NSDictionary original: lo guarda en un `_v` privado y, en React Native
-// 0.87.1, NO expone `unsafeRawValue()`. Ese accesor solo lo emite el
-// generador de structs de constantes (serializeConstantsStruct.js), no el de
-// argumentos de metodo (serializeRegularStruct.js), asi que el diccionario se
-// reconstruye desde los accesores tipados.
+// The codegen struct is a read-only view over the original NSDictionary and,
+// in RN 0.87.1, exposes no raw accessor (`unsafeRawValue()` comes from the
+// constants-struct generator, not the method-argument one), so the dictionary
+// is rebuilt from the typed accessors.
 //
-// No es ceremonia: cada `options.titleImageUrl()` ES el contrato de
-// compilacion que compra esta migracion. Si una clave se renombra en
-// src/NativeKhipu.ts, el accesor desaparece y este archivo deja de compilar en
-// vez de fallar callado en runtime. El parseo de valores sigue viviendo en un
-// solo lugar, Khipu.swift.
+// That is the point, not ceremony: every `options.titleImageUrl()` is the
+// compile-time contract this migration buys. Rename a key in NativeKhipu.ts and
+// this file stops compiling instead of failing silently at runtime. Value
+// parsing still lives in one place, Khipu.swift.
 
 static void KhipuPutString(NSMutableDictionary *target, NSString *key, NSString *_Nullable value)
 {
@@ -111,3 +110,43 @@ RCT_EXPORT_MODULE()
 }
 
 @end
+
+#else // !RCT_NEW_ARCH_ENABLED
+
+// OLD ARCHITECTURE: declare the module the way 3.0.5 did. Two measured
+// blockers, not a style preference:
+//
+// 1. Without TurboModules there is no JSI class to register via getTurboModule.
+//    RCT_EXPORT_MODULE() with no exported method leaves the module with no
+//    methods at all, and merchants get a useless object.
+//
+// 2. The block above must import "react_native_khipu-Swift.h" to see KhipuImpl,
+//    and on RN 0.75.5 that header does not compile: swiftc cannot resolve React
+//    as a module there (0.75.5 does not declare React-Core with
+//    :modular_headers => true), so instead of `@import React;` it falls back to
+//    the pod umbrella and emits an import that does not resolve. See
+//    ios/react_native_khipu.h.
+//
+// RCT_EXTERN_REMAP_MODULE solves both: it exports "Khipu" pointing at the Swift
+// class, exports the method, and needs no Swift-generated header because the
+// link to KhipuImpl is done by the linker, not the compiler.
+//
+// The selector must match ios/Khipu.swift exactly; renaming it there breaks
+// this at runtime, not at compile time.
+
+#import <React/RCTBridgeModule.h>
+
+@interface RCT_EXTERN_REMAP_MODULE(Khipu, KhipuImpl, NSObject)
+
+RCT_EXTERN_METHOD(startOperation:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+
++ (BOOL)requiresMainQueueSetup
+{
+  return YES;
+}
+
+@end
+
+#endif // RCT_NEW_ARCH_ENABLED

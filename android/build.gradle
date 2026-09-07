@@ -29,11 +29,9 @@ apply plugin: "kotlin-android"
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
 
-  // Codegen del TurboModule. `libraryName` tiene que coincidir con
-  // `codegenConfig.name` de package.json ("KhipuSpec"): es el nombre con el que
-  // el plugin de Gradle busca el spec y nombra la carpeta generada.
-  // Va dentro de esta guarda porque el bloque `react { }` lo aporta el plugin
-  // `com.facebook.react`, que arriba se aplica solo con la arquitectura nueva.
+  // TurboModule codegen. `libraryName` must match `codegenConfig.name` in
+  // package.json. This lives inside the guard because the `react { }` block is
+  // contributed by the plugin applied just above.
   react {
     jsRootDir = file("../src/")
     libraryName = "KhipuSpec"
@@ -59,6 +57,16 @@ def supportsNamespace() {
 }
 
 android {
+  // La *declaracion* del modulo depende de la arquitectura y la logica no:
+  //   src/main/java/com/khipu/KhipuModuleImpl.kt   -> la logica, una sola vez
+  //   src/newarch/java/com/khipu/KhipuModule.kt    -> extiende NativeKhipuSpec (codegen)
+  //   src/oldarch/java/com/khipu/KhipuModule.kt    -> ReactContextBaseJavaModule + @ReactMethod
+  // Solo uno de los dos entra al compilador, elegido por el mismo predicado que
+  // decide si se aplica el plugin `com.facebook.react` (y por lo tanto si existe
+  // la clase generada). Sin esto, la arquitectura vieja muere con
+  // "Unresolved reference 'NativeKhipuSpec'".
+  sourceSets.main.java.srcDirs += isNewArchitectureEnabled() ? ['src/newarch/java'] : ['src/oldarch/java']
+
   if (supportsNamespace()) {
     namespace "com.khipu"
 

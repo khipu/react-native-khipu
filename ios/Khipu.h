@@ -1,16 +1,16 @@
-// Este header es Obj-C++ a proposito: el header que emite codegen incluye
-// <optional> y <vector>, y NativeKhipuSpec hereda de RCTTurboModule, que es C++.
+// New architecture only. Under the old architecture there are no TurboModules,
+// so the module is declared entirely in Khipu.mm with RCT_EXTERN_REMAP_MODULE
+// and this header stays empty.
 //
-// El guard no es decorativo. CocoaPods mete todos los headers del pod en su
-// umbrella header, y Swift compila esa umbrella como Obj-C puro
-// (-import-underlying-module esta en OTHER_SWIFT_FLAGS del pod). Sin el guard,
-// el build muere antes de mirar una linea de Swift con:
+// The __cplusplus guard matters: CocoaPods pulls every pod header into the
+// umbrella, which Swift compiles as plain Obj-C. The codegen header includes
+// <optional> and <vector>, so without the guard the build fails before Swift is
+// even parsed ("'utility' file not found").
 //
-//   error 'utility' file not found
-//   error could not build module 'ReactCodegen'
-//   error could not build module 'react_native_khipu'
-//
-// Quien lo importa de verdad es ios/Khipu.mm, que si es Obj-C++.
+// RCT_NEW_ARCH_ENABLED arrives via OTHER_CPLUSPLUSFLAGS, which only applies to
+// C++/Obj-C++ units, so the umbrella pass sees neither macro and gets an empty
+// file, which is what we want.
+#ifdef RCT_NEW_ARCH_ENABLED
 #ifdef __cplusplus
 
 #import <KhipuSpec/KhipuSpec.h>
@@ -19,4 +19,5 @@
 
 @end
 
+#endif
 #endif

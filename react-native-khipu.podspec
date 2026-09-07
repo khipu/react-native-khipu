@@ -16,17 +16,23 @@ Pod::Spec.new do |s|
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
 
-  # React Native >=0.75 resuelve el SDK desde git con Swift Package Manager, lo
-  # que deja al plugin inmune al freeze del trunk de CocoaPods del 2026-12-02:
-  # todo el arbol de Khipu (KhipuClientIOS, KhenshinProtocolSwift,
-  # KhenshinSecureMessage y sus transitivas) sale de git y no del trunk.
+  # Public headers go under the MODULE directory (underscores) rather than the
+  # POD one (hyphens, the default). Without this, the Swift-generated header on
+  # RN 0.75.5 asks for <react_native_khipu/react_native_khipu.h> and does not
+  # resolve. See ios/react_native_khipu.h.
+  s.header_dir   = "react_native_khipu"
+
+  # React Native >=0.75 resolves the SDK from git via Swift Package Manager,
+  # which keeps the plugin clear of the CocoaPods trunk freeze on 2026-12-02:
+  # the whole Khipu tree (KhipuClientIOS, KhenshinProtocolSwift,
+  # KhenshinSecureMessage and their transitives) comes from git, not trunk.
   #
-  # Por debajo de 0.75 el helper no existe y se cae al pod, congelado en la
-  # ultima version publicada en trunk antes de esa fecha. Esos comercios suben
-  # de React Native para recibir versiones nuevas del SDK.
+  # Below 0.75 the helper does not exist and we fall back to the pod, frozen at
+  # the last version published to trunk before that date. Those merchants need
+  # to upgrade React Native to get newer SDK releases.
   #
-  # Ojo: el camino SPM necesita que la app llame a khipu_fix_spm_modulemaps
-  # desde su post_install. Ver ios/khipu_spm_fix.rb y el README.
+  # The SPM path requires the app to call khipu_fix_spm_modulemaps from its
+  # post_install. See ios/khipu_spm_fix.rb and the README.
   if respond_to?(:spm_dependency, true)
     spm_dependency(s,
       url: "https://github.com/khipu/KhipuClientIOS.git",
@@ -37,10 +43,10 @@ Pod::Spec.new do |s|
     s.dependency "KhipuClientIOS", "2.16.5"
   end
 
-  # install_modules_dependencies existe desde React Native 0.71. El guard NO es
-  # decorativo: sin el, el podspec revienta con "undefined method
-  # install_modules_dependencies" en cualquier proyecto por debajo de 0.71, y
-  # peerDependencies declara react-native "*".
+  # install_modules_dependencies exists from React Native 0.71 on. The guard is
+  # load-bearing: without it the podspec dies with "undefined method
+  # install_modules_dependencies" on anything older, and peerDependencies
+  # declares react-native "*".
   # Ver https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)
