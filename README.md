@@ -89,6 +89,42 @@ android.jetifier.ignorelist = jackson-core
 Without it the build fails at `:app:desugarDebugFileDependencies` with `Unsupported class file
 major version 63`.
 
+### 4. Declare the banking apps
+
+Khipu opens the user's banking app when a payment needs reinforced authorization (2FA). Android
+only allows that if your app declares which packages it may open, so add a `<queries>` element as
+a direct child of `<manifest>` in `android/app/src/main/AndroidManifest.xml`.
+
+For Chile, these are the ones:
+
+```xml
+<queries>
+    <package android:name="cl.bci.pass" />
+    <package android:name="cl.bancochile.mi_pass2" />
+    <package android:name="net.veritran.becl.prod" />
+    <package android:name="cl.scotiabank.go" />
+    <package android:name="cl.santander.santanderpasschile" />
+    <package android:name="com.konylabs.ItauMobileBank" />
+    <package android:name="cl.bancosecurity.securitypass" />
+    <package android:name="cl.bice.bicepassmobile2" />
+    <package android:name="cl.consorcio.tupass" />
+</queries>
+```
+
+The iOS equivalent is `LSApplicationQueriesSchemes`, described below.
+
+### Release builds
+
+If your project uses proguard with an aggressive configuration, add these rules to
+`proguard-rules.pro` so the release APK keeps what the SDK needs:
+
+```
+-keep public class com.khipu.client.**{
+    public protected *;
+}
+-keep class com.khipu.khenshin.protocol.** { *; }
+```
+
 
 ## iOS
 
