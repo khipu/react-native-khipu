@@ -145,6 +145,14 @@
     "trailingComma": "es5",
     "useTabs": false
   },
+  "codegenConfig": {
+    "name": "KhipuSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.khipu"
+    }
+  },
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
