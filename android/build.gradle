@@ -28,6 +28,17 @@ apply plugin: "kotlin-android"
 
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
+
+  // Codegen del TurboModule. `libraryName` tiene que coincidir con
+  // `codegenConfig.name` de package.json ("KhipuSpec"): es el nombre con el que
+  // el plugin de Gradle busca el spec y nombra la carpeta generada.
+  // Va dentro de esta guarda porque el bloque `react { }` lo aporta el plugin
+  // `com.facebook.react`, que arriba se aplica solo con la arquitectura nueva.
+  react {
+    jsRootDir = file("../src/")
+    libraryName = "KhipuSpec"
+    codegenJavaPackageName = "com.khipu"
+  }
 }
 
 def getExtOrDefault(name) {

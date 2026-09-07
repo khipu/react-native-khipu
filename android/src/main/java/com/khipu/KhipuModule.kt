@@ -6,8 +6,6 @@ import android.os.Build
 import com.facebook.react.bridge.BaseActivityEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
@@ -21,12 +19,7 @@ import kotlin.String
 import kotlin.let
 
 
-class KhipuModule(reactContext: ReactApplicationContext) :
-  ReactContextBaseJavaModule(reactContext) {
-
-  override fun getName(): String {
-    return NAME
-  }
+class KhipuModule(reactContext: ReactApplicationContext) : NativeKhipuSpec(reactContext) {
 
   private var startOperationPromise: Promise? = null
 
@@ -78,8 +71,7 @@ class KhipuModule(reactContext: ReactApplicationContext) :
     reactContext.addActivityEventListener(activityEventListener)
   }
 
-  @ReactMethod
-  fun startOperation(operationOptions: ReadableMap, promise: Promise) {
+  override fun startOperation(operationOptions: ReadableMap, promise: Promise) {
 
     val activity = reactApplicationContext.currentActivity
 
