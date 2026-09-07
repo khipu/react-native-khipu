@@ -27,9 +27,11 @@ Un solo `operationId` reutilizado en todas.
 | 0.75.5 | SPM | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 69 MB |
 | 0.74.7 | pod | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 62 MB |
 | 0.73.11 | pod | ✅ pago | ✅ pago | 2.16.5 | 2.27.0 | 39 MB |
+| 0.84.1 | SPM | ✅ compila | ✅ pago | — | 2.27.0 | 123 MB |
 | 0.72.17 | pod | ✅ pago (Yoga) | ❌ **no compila** | 2.16.5 | — | — |
 
-**Ocho de nueve versiones levantan un pago real en las dos plataformas.** 0.73.11 se midió el
+**Ocho de diez versiones levantan un pago real en las dos plataformas.** 0.84.1 se agrego al
+investigar el rango de `fmt`; en iOS se verifico el build, no el pago. 0.73.11 se midió el
 mismo día contra `3.0.2`, para fijar el piso real del soporte; las otras ocho contra `3.0.1`. La única falla es
 Android en 0.72, analizada abajo.
 
@@ -139,6 +141,63 @@ README ya mostraba sin decirlo. Con eso, 0.73.11 levanta el pago.
 
 Primero medimos 0.73 con el parche subiendo solo el `ext` y lo registramos como falla. Era un
 error del arnes, no del plugin: la instruccion de la doc no se habia aplicado de verdad.
+
+## El rango de `fmt`: la causa tiene dos factores
+
+Investigado el 2026-09-06 a partir de una pregunta de Emilio —si el ajuste no deberia abarcar de
+0.76 a 0.82 en vez de solo 0.76 y 0.80— y de una correccion de la sesion `khipudocs-redocly-v2`,
+que midio los tarballs publicados y mostro que la explicacion que teniamos no se sostenia.
+
+**Tenia razon: el rango era mucho mas amplio.** Y la causa no es un factor sino dos. La falla
+requiere que la version de `fmt` sea 11.0.2 **y** que el build la compile desde fuente.
+
+| RN | `fmt` | Desde fuente | Sin workaround | Con workaround |
+|---|---|---|---|---|
+| 0.75.5 | 9.1.0 | si | ✅ medido | — |
+| 0.76.9 | 11.0.2 | si | ❌ medido | ✅ medido |
+| 0.80.3 | 11.0.2 | si | ❌ medido | ✅ medido |
+| 0.82.1 | 11.0.2 | si | ❌ medido | ✅ medido |
+| 0.83.1 | 11.0.2 | si | ❌ medido | ✅ medido |
+| 0.83.10 | 12.1.0 | si | ✅ medido | — |
+| 0.84.1 | 11.0.2 | **no, prebuilt** | ✅ medido | ✅ medido (inofensivo) |
+| 0.85.0 | 12.1.0 | no, prebuilt | ✅ medido | — |
+| 0.87.1 | 12.1.0 | no, prebuilt | ✅ medido | — |
+
+**Inferidas, no medidas: 0.77, 0.78, 0.79 y 0.81.** Declaran `fmt` 11.0.2 desde fuente y quedan
+encajonadas entre fallas medidas a los dos lados.
+
+Las pasadas con y sin workaround se hicieron **sobre la misma app**, agregando solo el bloque de
+`fmt` al `Podfile` entre una y otra, para que la unica variable que cambie sea esa. Señal
+secundaria de que el mecanismo es real: en 0.83.1 el build sin workaround aborto a las 5.772 lineas
+de log y el que si lo tenia paso las 18.000.
+
+### El origen del bump y el hueco de 0.84
+
+El commit es `faeef2b90`, "Bump fmt to 12.1.0 to fix xcode 26.4" (PR #56099), del 2026-03-19.
+Estado por rama: `0.82-stable` 11.0.2, `0.83-stable` 12.1.0, **`0.84-stable` 11.0.2**,
+`0.85-stable` 12.1.0, `main` 12.1.0.
+
+La linea de tiempo explica el hueco sin suponer intenciones: `0.84.1` —ultima de esa linea— salio
+el 2026-02-27, **tres semanas antes** de que el arreglo existiera. Llego a `0.85.0` (2026-04-07)
+por ser la siguiente release de `main`, y a `0.83.5` (2026-04-14) por cherry-pick. No hubo ninguna
+release de 0.84 posterior al arreglo a la cual llevarlo.
+
+Pero 0.84 no esta afectada igual, por otro motivo: desde esa version React Native entrega sus
+dependencias de iOS como binarios prebuilt (`ReactNativeDependencies`), asi que `fmt` no se compila
+y la version que declara su podspec es vestigial.
+
+### Tres afirmaciones falsas que este trabajo corrigio
+
+1. **"Arreglado en RN 0.84+, que sube la version de `fmt`"**, del README. La conclusion practica
+   sobre 0.84 resulto correcta, pero el mecanismo era falso: 0.84 esta bien por el cambio a
+   prebuilt, no por el bump, que nunca llego a esa linea.
+2. **"La version de `fmt` no cambia entre 0.80 y 0.83, asi que la explicacion no se sostiene"**, de
+   la sesion de docs. Midieron 0.83.1 y 0.80.2 y vieron 11.0.2 en las dos. Cambia — en 0.83.5.
+3. **"La linea 0.84 esta afectada"**, inferido por mi a partir de que declara 11.0.2. Se midio y
+   compila. Si se hubiera publicado, habria metido una alarma inexistente en la doc publica.
+
+Las tres tienen la misma forma: generalizar desde una parte de la matriz. Es la razon por la que
+esta tabla dice, casilla por casilla, si el resultado se midio o se dedujo.
 
 ## Casillas abiertas
 
