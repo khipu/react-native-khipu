@@ -163,8 +163,38 @@ requiere que la version de `fmt` sea 11.0.2 **y** que el build la compile desde 
 | 0.85.0 | 12.1.0 | no, prebuilt | ✅ medido | — |
 | 0.87.1 | 12.1.0 | no, prebuilt | ✅ medido | — |
 
-**Inferidas, no medidas: 0.77, 0.78, 0.79 y 0.81.** Declaran `fmt` 11.0.2 desde fuente y quedan
-encajonadas entre fallas medidas a los dos lados.
+### Los bordes exactos: 0.76.9 a 0.83.4
+
+Corregido el 2026-09-07. El rango que habiamos publicado, "0.76 a 0.83.1", estaba **mal en los dos
+extremos**. Lo encontro la sesion `khipudocs-redocly-v2` leyendo `spec.version` del
+`third-party-podspecs/fmt.podspec` release por release en vez de fiarse de los patches medidos, y
+lo verifique de forma independiente:
+
+| Release | `fmt` |
+|---|---|
+| 0.75.5, 0.76.0, 0.76.3, 0.76.5, 0.76.8 | 9.1.0 |
+| **0.76.9** en adelante | 11.0.2 |
+| 0.83.1, **0.83.2, 0.83.3, 0.83.4** | 11.0.2 |
+| **0.83.5** en adelante | 12.1.0 |
+
+- **Borde inferior: sobraba.** Los patches 0.76.0 a 0.76.8 traen `fmt` 9.1.0, la misma que 0.75.5,
+  que se midio compilando. El bump entra exactamente en 0.76.9, que resulta ser el unico patch de
+  0.76 que compilamos. Decir "desde 0.76" mandaba a alguien en 0.76.3 a aplicar un ajuste que no
+  necesita — inofensivo, pero falso.
+- **Borde superior: faltaba, y este rompe builds.** 0.83.2, 0.83.3 y 0.83.4 siguen en 11.0.2 desde
+  fuente. Con "hasta 0.83.1", alguien en 0.83.3 concluye que no le corresponde el ajuste y su build
+  falla mientras la documentacion le dice que esta a salvo. Es el peor tipo de error de esta ronda:
+  la pagina manda a alguien a chocar.
+
+**Es la tercera vez que el mismo error nos muerde.** Yo con 0.84, la sesion de docs con 0.83.1, y
+ahora los dos con 0.76. Las tres veces fue tomar un patch medido como si representara la linea
+menor entera. La diferencia es que el rango ahora se **lee** del podspec de cada release, no se
+deduce de las que compilamos.
+
+**Que sigue siendo inferencia y que no.** La version de `fmt` esta leida para todas las releases
+del rango, asi que los bordes son exactos. Lo que sigue deducido del mecanismo es el resultado del
+build en las releases que no compilamos: se midieron 0.76.9, 0.80.3, 0.82.1 y 0.83.1 fallando, y
+0.75.5, 0.83.10, 0.84.1, 0.85.0 y 0.87.1 compilando.
 
 Las pasadas con y sin workaround se hicieron **sobre la misma app**, agregando solo el bloque de
 `fmt` al `Podfile` entre una y otra, para que la unica variable que cambie sea esa. Señal

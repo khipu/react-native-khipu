@@ -187,14 +187,14 @@ so treat the "no" rows as "fails on 26.6" rather than as a claim about every Xco
 |---|---|---|---|
 | 0.72 | no | Yoga, `YGValue.h` | see below |
 | 0.73, 0.74, 0.75 | yes | — | — |
-| **0.76 through 0.83.1** | no | `fmt`, `format-inl.h` | see below |
-| 0.83.5 and later, 0.84, 0.85, 0.87 | yes | — | — |
+| **0.76.9 through 0.83.4** | no | `fmt`, `format-inl.h` | see below |
+| 0.76.8 and earlier, 0.83.5 and later, 0.84, 0.85, 0.87 | yes | — | — |
 
 We built 0.72, 0.73, 0.74.7, 0.75.5, 0.76.9, 0.80.3, 0.82.1, 0.83.1, 0.83.10, 0.84.1, 0.85.0 and
 0.87.1. Rows that cover versions we did not build are inferred from the `fmt` version each release
 ships — see below.
 
-#### `fmt` — affects React Native 0.76 through 0.83.1
+#### `fmt` — affects React Native 0.76.9 through 0.83.4
 
 ```
 Pods/fmt/include/fmt/format-inl.h: error: call to consteval function
@@ -210,9 +210,9 @@ earlier releases, so if you are on Xcode 26.0–26.3 you may not be affected.
 
 | React Native | `fmt` | Compiled from source | Affected |
 |---|---|---|---|
-| 0.75 and earlier | 9.1.0 | yes | no — no `consteval` |
-| 0.76 – 0.83.1 | 11.0.2 | yes | **yes** |
-| 0.83.5 – 0.83.10 | 12.1.0 | yes | no |
+| 0.76.8 and earlier | 9.1.0 | yes | no — no `consteval` |
+| **0.76.9 – 0.83.4** | 11.0.2 | yes | **yes** |
+| 0.83.5 and later 0.83.x | 12.1.0 | yes | no |
 | 0.84.x | 11.0.2 | **no** — prebuilt binaries | no |
 | 0.85 and later | 12.1.0 | no — prebuilt binaries | no |
 
@@ -221,9 +221,14 @@ but **not** 0.84, whose last release predates it. 0.84 is fine anyway, for a dif
 that version React Native ships its iOS third-party dependencies as prebuilt binaries, so your
 build never compiles `fmt` and the version it declares stops mattering.
 
-We built and confirmed the failure on 0.76.9, 0.80.3, 0.82.1 and 0.83.1, and confirmed a clean
-build on 0.75.5, 0.83.10, 0.84.1, 0.85.0 and 0.87.1. **0.77 through 0.79 and 0.81 are inferred**,
-not built: they ship the same `fmt` 11.0.2 from source and sit between measured failures.
+The boundaries are exact, not rounded: we read `spec.version` from each release's
+`third-party-podspecs/fmt.podspec`. `fmt` 9.1.0 holds through **0.76.8**, 11.0.2 starts at
+**0.76.9**, and 12.1.0 starts at **0.83.5** — so 0.83.2, 0.83.3 and 0.83.4 are still affected.
+
+We built and confirmed the failure on 0.76.9, 0.80.3, 0.82.1 and 0.83.1, and a clean build on
+0.75.5, 0.83.10, 0.84.1, 0.85.0 and 0.87.1. For the releases in between we read the `fmt` version
+rather than building them, so the range is exact but their build outcome follows from the
+mechanism above.
 
 Until you can upgrade, compile `fmt` as C++17 in your `post_install`:
 
