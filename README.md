@@ -63,11 +63,12 @@ Kotlin 2.0.21 is the floor because the Android SDK (`com.khipu:khipu-client-andr
 with it and uses `org.jetbrains.kotlin.plugin.compose`, which only exists from Kotlin 2.0 onwards.
 Below `compileSdk 34` the build fails at `:app:checkDebugAarMetadata`.
 
-**Put the Kotlin version on the `classpath` line, not only in `ext`.** Some templates — React
-Native 0.73 among them — ship `classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")` with no
-version and resolve it themselves, so raising `kotlinVersion` in `ext` has no effect at all. If the
-build fails with `The binary version of its metadata is 2.0.0, expected version is 1.8.0`, this is
-why.
+**On React Native 0.73, put the Kotlin version on the `classpath` line, not only in `ext`.**
+That template ships `classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")` with no version and
+resolves it to Kotlin 1.8 on its own, so raising `kotlinVersion` in `ext` has no effect at all and
+the build fails with `The binary version of its metadata is 2.0.0, expected version is 1.8.0`.
+Later templates also declare it without a version, but resolve to a Kotlin new enough that you do
+not need to touch it — we verified that on 0.84.
 
 ### 2. Apply the Kotlin plugin
 
