@@ -1,5 +1,57 @@
 # Changelog
 
+## 3.0.3
+
+### Documentación de Android, otra vez — y esta corrige un error nuestro
+
+Como `3.0.2`, esta versión es solo documentación: **si tu build funciona, no
+necesitas actualizar**. No hay cambios de código.
+
+**Corregimos el rango de versiones afectadas por el problema de `fmt` en iOS.**
+Decíamos que afecta a React Native 0.76 y 0.80 y que se arregla en "0.84 y
+posteriores". Las dos cosas estaban mal.
+
+El rango real es **0.76 hasta 0.83.1**. Lo medimos compilando: 0.76.9, 0.80.3,
+0.82.1 y 0.83.1 fallan sin el ajuste y compilan con él.
+
+| React Native | ¿Afectada? |
+| --- | --- |
+| 0.75 y anteriores | no |
+| **0.76 – 0.83.1** | **sí** |
+| 0.83.5 y posteriores | no |
+| 0.84 y posteriores | no |
+
+Si estás en el rango afectado, tienes tres salidas: subir a `0.83.5` o
+posterior, subir a `0.84` o posterior, o aplicar el ajuste de C++17 que sigue
+documentado en el README.
+
+Sobre el "arreglado en 0.84" que decíamos antes: la conclusión era correcta pero
+por el motivo equivocado, y por eso el rango nos quedó mal. `0.84` no recibió la
+corrección de `fmt` —su última versión salió tres semanas antes de que existiera—
+sino que dejó de compilar `fmt` del todo, porque desde ahí React Native entrega
+sus dependencias de iOS ya compiladas.
+
+### Dos pasos de Android que faltaban en el README
+
+Estaban en `docs.khipu.com` y no en el README, así que quien seguía solo el
+README se los perdía.
+
+**Las apps bancarias.** Khipu abre la app del banco cuando el pago necesita
+autorización reforzada, y Android solo lo permite si tu app declara qué paquetes
+puede abrir. Hay que agregar un bloque `<queries>` al `AndroidManifest.xml`.
+
+**Las reglas de proguard** para builds de `release` con configuración agresiva.
+
+### Y una trampa de React Native 0.73
+
+En 0.73 hay que poner la versión de Kotlin en la línea del `classpath`, no solo
+en `ext`. Ese template declara el plugin sin versión y la resuelve por su cuenta
+en Kotlin 1.8, así que cambiar `kotlinVersion` **no tiene ningún efecto** y el
+build falla con `The binary version of its metadata is 2.0.0, expected version
+is 1.8.0`. Los templates posteriores también lo declaran sin versión, pero
+resuelven algo suficientemente nuevo y no hay que tocar nada.
+
+
 ## 3.0.2
 
 ### Requisitos de Android que faltaban en la documentación
