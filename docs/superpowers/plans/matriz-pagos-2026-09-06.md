@@ -229,12 +229,80 @@ y la version que declara su podspec es vestigial.
 Las tres tienen la misma forma: generalizar desde una parte de la matriz. Es la razon por la que
 esta tabla dice, casilla por casilla, si el resultado se midio o se dedujo.
 
+## Las reglas de proguard: primera verificacion
+
+Medido el 2026-09-07 a pedido de la sesion `khipudocs-redocly-v2`, que señalo algo que nadie habia
+mirado: **ese bloque de reglas esta publicado en cinco paginas** —React Native, Flutter, Capacitor,
+Cordova y Android nativo— y jamas se ejercito. Y es la zona con peor momento de descubrimiento: el
+comercio desarrolla en `debug` todo el proyecto y se entera al generar el APK de `release` para
+publicar.
+
+Cuatro pasadas sobre **la misma app** (RN 0.87.1, `react-native-khipu@3.0.3`), build de `release`
+con R8 realmente corriendo, instalado en emulador y con el pago levantado:
+
+| Pasada | `protocol` | `client.**` | Resultado |
+|---|---|---|---|
+| A | ✓ | ✓ | **pago OK**, 0 crashes |
+| B | ✗ | ✗ | **falla** — Jackson, actividad forzada a terminar |
+| C | ✓ | ✗ | **pago OK**, 0 crashes |
+| D | ✗ | ✓ | **falla** — Jackson, 3 crashes, forzada |
+
+**Las reglas funcionan** — primer dato duro sobre ese bloque. Y `-keep class
+com.khipu.khenshin.protocol.** { *; }` es **necesaria y suficiente**; `-keep public class
+com.khipu.client.**` no es ni necesaria ni suficiente para este flujo.
+
+### El fallo exacto, por si aplica a las otras integraciones
+
+```
+FATAL EXCEPTION: EventThread
+Cannot construct instance of `e22` (no Creators, like default constructor, exist):
+abstract types either need to be mapped to concrete types...
+at [Source: (String)"{"type":"OPERATION_REQUEST","message":"Iniciando pago..."}"]
+...
+Force finishing activity com.khipu.client.KhipuActivity
+```
+
+Jackson resuelve el subtipo concreto del protocolo **por el nombre** que viene en `"type"`, y R8 lo
+renombra. Muere en el primer mensaje del pago. El mecanismo es del SDK Android y del protocolo, no
+de React Native, asi que es razonable esperar el mismo fallo en las otras cuatro integraciones.
+
+### Por que NO angostar las reglas publicadas todavia
+
+`client.**` no aporta nada **a este flujo**, que llega hasta la pantalla de email en una sola
+version de RN. Si alguna ruta posterior del SDK —`openApp`, las pantallas de banco, un callback—
+toca algo de `com.khipu.client` por reflexion, angostar romperia a comercios en un camino que no se
+ejercito. Eso lo puede responder el repo del SDK Android, no esta medicion.
+
+**Costo de mantenerlas anchas:** ninguno en tamaño. El APK pesa **72 MB en las cuatro pasadas**,
+porque lo dominan las librerias nativas y el aporte de dex del cliente es marginal. Lo unico en
+juego es que el cliente liviano viaja sin ofuscar en el APK del comercio.
+
+### Como se activa proguard, que ninguna pagina documenta
+
+El template de React Native trae `def enableProguardInReleaseBuilds = false` **dentro de
+`android/app/build.gradle`**, no en `gradle.properties`. Tocar `gradle.properties` no tiene ningun
+efecto: el build de `release` sale exitoso y R8 nunca corre. El primer intento de esta medicion se
+perdio asi, con las dos pasadas dando el mismo APK de 85 MB, y lo detecto una guarda que exige que
+exista `app/build/outputs/mapping/release/mapping.txt`.
+
+Es la explicacion mas simple de por que el bloque llevaba años publicado sin verificarse: es facil
+creer que se corrio un build con R8 sin haberlo hecho.
+
+### Y una señal propia que resulto demasiado gruesa
+
+`PAGO_OK` se disparaba con "actividad resumida **o** marcadores en logcat", y en la pasada B la
+actividad aparecio y **despues** la mataron: quedo registrada como exito. El criterio correcto
+exige actividad arriba, **cero crashes** y que Android no la haya forzado a terminar. Las etiquetas
+del `resultados-proguard.tsv` estan mal por eso; la tabla de arriba es la lectura corregida a partir
+de los crashes, el force-finish, el ciclo de vida y la captura.
+
 ## Casillas abiertas
 
 - **`openApp` y las nueve URL schemes.** Se declaran en ambas plataformas siguiendo la doc, pero
   el pago se detiene en "Ingresa tu email" y nunca abre una app bancaria. Sigue sin verificarse en
   ninguna de las cuatro integraciones de Khipu.
-- **Builds de `release` y las reglas de proguard.** Todo se midió en `debug`.
+- ~~**Builds de `release` y las reglas de proguard.**~~ Medido el 2026-09-07 en RN 0.87.1, ver
+  arriba. Sigue sin medirse en las otras nueve versiones y en las rutas posteriores del pago.
 - **Dispositivo físico.** Todo fue simulador y emulador.
 - **Un solo `operationId`,** nunca llevado más allá de la pantalla de email.
 - **`apply plugin: 'kotlin-android'`.** La doc pide comprobarlo; los builds pasaron, así que los
