@@ -80,7 +80,7 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": ">=0.74"
   },
   "workspaces": [
     "example"

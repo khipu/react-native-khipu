@@ -15,15 +15,16 @@ npm install react-native-khipu
 
 | | |
 |---|---|
-| React Native | 0.73 or later |
+| React Native | 0.74 or later |
 | `compileSdk` | 34 or later |
 | Kotlin Gradle plugin | 2.0.21 or later |
 
-**React Native 0.72 and earlier are not supported on Android.** Since **August 31, 2026** Google
+**React Native 0.73 and earlier are not supported.** On Android, since **August 31, 2026** Google
 Play requires new apps and updates to target API 36, and a 0.72 project cannot reach that target:
-its Gradle tooling does not run on the versions required to get there. If you are on 0.72 you need
-to upgrade React Native, with or without Khipu. On iOS, 0.72 still works — see the Xcode 26
-notes below.
+its Gradle tooling does not run on the versions required to get there. 0.73 is excluded for a
+different reason: `BaseReactPackage` and `ReactModuleInfo.classIsTurboModule` do not exist in
+`react-android` 0.73, and the only alternative available there is deprecated upstream with a
+scheduled removal. If you are below 0.74 you need to upgrade React Native.
 
 ### 1. Add the Khipu repository
 
@@ -63,13 +64,6 @@ Kotlin 2.0.21 is the floor because the Android SDK (`com.khipu:khipu-client-andr
 with it and uses `org.jetbrains.kotlin.plugin.compose`, which only exists from Kotlin 2.0 onwards.
 Below `compileSdk 34` the build fails at `:app:checkDebugAarMetadata`.
 
-**On React Native 0.73, put the Kotlin version on the `classpath` line, not only in `ext`.**
-That template ships `classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")` with no version and
-resolves it to Kotlin 1.8 on its own, so raising `kotlinVersion` in `ext` has no effect at all and
-the build fails with `The binary version of its metadata is 2.0.0, expected version is 1.8.0`.
-Later templates also declare it without a version, but resolve to a Kotlin new enough that you do
-not need to touch it — we verified that on 0.84.
-
 ### 2. Apply the Kotlin plugin
 
 Check that `android/app/build.gradle` applies it:
@@ -80,7 +74,7 @@ apply plugin: 'kotlin-android'
 
 ### 3. Exclude `jackson-core` from jetifier
 
-**Required on React Native 0.73 and 0.74**, whose templates enable jetifier by default even if you
+**Required on React Native 0.74**, whose template enables jetifier by default even if you
 never turned it on. Add this to `android/gradle.properties`:
 
 ```
@@ -186,7 +180,7 @@ so treat the "no" rows as "fails on 26.6" rather than as a claim about every Xco
 | React Native | Builds on Xcode 26.6 | If not, why | Workaround |
 |---|---|---|---|
 | 0.72 | no | Yoga, `YGValue.h` | see below |
-| 0.73, 0.74, 0.75 | yes | — | — |
+| 0.74, 0.75 | yes | — | — |
 | **0.76.9 through 0.83.4** | no | `fmt`, `format-inl.h` | see below |
 | 0.76.8 and earlier, 0.83.5 and later, 0.84, 0.85, 0.87 | yes | — | — |
 
