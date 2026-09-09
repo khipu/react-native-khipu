@@ -42,30 +42,40 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
           startOperationPromise?.let { promise ->
             when (resultCode) {
               Activity.RESULT_OK -> {
-                val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                  data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java) as KhipuResult
-                } else {
-                  data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as KhipuResult
-                }
-                val returnMap = WritableNativeMap()
-                returnMap.putString("operationId", result.operationId)
-                returnMap.putString("result", result.result)
-                returnMap.putString("exitTitle", result.exitTitle)
-                returnMap.putString("exitMessage", result.exitMessage)
-                returnMap.putString("exitUrl", result.exitUrl)
-                returnMap.putString("failureReason", result.failureReason)
-                returnMap.putString("continueUrl", result.continueUrl)
+                // Read defensively: the cast used to be unchecked, so a
+                // RESULT_OK carrying no payload threw out of this listener and
+                // settled nothing, which is the same hang as dropping it.
+                val result = runCatching {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java)
+                  } else {
+                    data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as? KhipuResult
+                  }
+                }.getOrNull()
 
-                val events = WritableNativeArray()
-                for (event in result.events) {
-                  val eventMap = WritableNativeMap()
-                  eventMap.putString("name", event.name)
-                  eventMap.putString("type", event.type)
-                  eventMap.putString("timestamp", event.timestamp)
-                  events.pushMap(eventMap)
+                if (result == null) {
+                  promise.reject(NO_RESULT, "The operation finished without a result")
+                } else {
+                  val returnMap = WritableNativeMap()
+                  returnMap.putString("operationId", result.operationId)
+                  returnMap.putString("result", result.result)
+                  returnMap.putString("exitTitle", result.exitTitle)
+                  returnMap.putString("exitMessage", result.exitMessage)
+                  returnMap.putString("exitUrl", result.exitUrl)
+                  returnMap.putString("failureReason", result.failureReason)
+                  returnMap.putString("continueUrl", result.continueUrl)
+
+                  val events = WritableNativeArray()
+                  for (event in result.events) {
+                    val eventMap = WritableNativeMap()
+                    eventMap.putString("name", event.name)
+                    eventMap.putString("type", event.type)
+                    eventMap.putString("timestamp", event.timestamp)
+                    events.pushMap(eventMap)
+                  }
+                  returnMap.putArray("events", events)
+                  promise.resolve(returnMap)
                 }
-                returnMap.putArray("events", events)
-                promise.resolve(returnMap)
               }
               // Anything that is not RESULT_OK still has to settle the promise.
               // Dropping it leaves the merchant's `await` hanging forever.
@@ -176,6 +186,7 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
     const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"
     const val NO_OPERATION_ID = "NO_OPERATION_ID"
     const val OPERATION_CANCELED = "OPERATION_CANCELED"
+    const val NO_RESULT = "NO_RESULT"
     const val OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS"
   }
 }

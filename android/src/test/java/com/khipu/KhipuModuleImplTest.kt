@@ -62,6 +62,26 @@ class KhipuModuleImplTest {
   }
 
   @Test
+  fun `a result with no payload settles the promise instead of throwing`() {
+    val context = reactContext()
+    val impl = KhipuModuleImpl(context)
+    val promise = mock<Promise>()
+
+    impl.startOperation(options(), promise)
+    // RESULT_OK with no extras: the unchecked cast used to throw out of the
+    // listener, which settles nothing and leaves the caller waiting.
+    listenerOf(context).onActivityResult(
+      activity,
+      KhipuModuleImpl.START_OPERATION_REQUEST,
+      Activity.RESULT_OK,
+      null
+    )
+
+    verify(promise, times(1)).reject(any<String>(), any<String>())
+    verify(promise, never()).resolve(anyOrNull())
+  }
+
+  @Test
   fun `a second operation while one is pending is rejected instead of dropped`() {
     val context = reactContext()
     val impl = KhipuModuleImpl(context)
