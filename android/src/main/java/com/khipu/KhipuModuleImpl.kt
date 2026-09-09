@@ -14,9 +14,6 @@ import com.khipu.client.KhipuColors
 import com.khipu.client.KhipuOptions
 import com.khipu.client.KhipuResult
 import com.khipu.client.getKhipuLauncherIntent
-import kotlin.Int
-import kotlin.String
-import kotlin.let
 
 /**
  * All module logic, once, with no architecture coupling.
@@ -135,9 +132,13 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
         }
       }
 
-      val colorsBuilder: KhipuColors.Builder = KhipuColors.Builder()
+      // Only when the merchant sent colors, matching ios/Khipu.swift. Measured
+      // to be a no-op today (getColorFromHex returns the fallback for a null
+      // hex, so an all-null KhipuColors yields the untouched scheme), but the
+      // builder default is null and the two platforms should not differ.
       if (options.hasKey("colors")) {
         val colors = options.getMap("colors")!!
+        val colorsBuilder: KhipuColors.Builder = KhipuColors.Builder()
         colors.getString("lightBackground")?.let { colorsBuilder.lightBackground(it) }
         colors.getString("lightOnBackground")?.let { colorsBuilder.lightOnBackground(it) }
         colors.getString("lightPrimary")?.let { colorsBuilder.lightPrimary(it) }
@@ -150,8 +151,8 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
         colors.getString("darkOnPrimary")?.let { colorsBuilder.darkOnPrimary(it) }
         colors.getString("darkTopBarContainer")?.let { colorsBuilder.darkTopBarContainer(it) }
         colors.getString("darkOnTopBarContainer")?.let { colorsBuilder.darkOnTopBarContainer(it) }
+        optionsBuilder.colors(colorsBuilder.build())
       }
-      optionsBuilder.colors(colorsBuilder.build());
     }
 
     val intent = getKhipuLauncherIntent(
