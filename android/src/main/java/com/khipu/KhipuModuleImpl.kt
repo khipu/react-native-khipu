@@ -40,49 +40,46 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
       ) {
         if (requestCode == START_OPERATION_REQUEST) {
           startOperationPromise?.let { promise ->
-            when (resultCode) {
-              Activity.RESULT_OK -> {
-                // Read defensively: the cast used to be unchecked, so a
-                // RESULT_OK carrying no payload threw out of this listener and
-                // settled nothing, which is the same hang as dropping it.
-                val result = runCatching {
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java)
-                  } else {
-                    data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as? KhipuResult
-                  }
-                }.getOrNull()
-
-                if (result == null) {
-                  promise.reject(NO_RESULT, "The operation finished without a result")
-                } else {
-                  val returnMap = WritableNativeMap()
-                  returnMap.putString("operationId", result.operationId)
-                  returnMap.putString("result", result.result)
-                  returnMap.putString("exitTitle", result.exitTitle)
-                  returnMap.putString("exitMessage", result.exitMessage)
-                  returnMap.putString("exitUrl", result.exitUrl)
-                  returnMap.putString("failureReason", result.failureReason)
-                  returnMap.putString("continueUrl", result.continueUrl)
-
-                  val events = WritableNativeArray()
-                  for (event in result.events) {
-                    val eventMap = WritableNativeMap()
-                    eventMap.putString("name", event.name)
-                    eventMap.putString("type", event.type)
-                    eventMap.putString("timestamp", event.timestamp)
-                    events.pushMap(eventMap)
-                  }
-                  returnMap.putArray("events", events)
-                  promise.resolve(returnMap)
-                }
+            // The SDK delivers a KhipuResult on BOTH result codes, so the
+            // payload decides, not resultCode. KhipuActivity.onCreate aborts an
+            // operation whose activity was destroyed past its tolerance with
+            // setResult(RESULT_CANCELED) carrying result="ERROR" and
+            // failureReason="USER_CANCELED"; an ordinary cancel goes through the
+            // dialog and comes back as RESULT_OK with the same shape. Rejecting
+            // the first would report one outcome two different ways depending on
+            // a timing the merchant cannot see, and iOS always resolves.
+            val result = runCatching {
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java)
+              } else {
+                data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as? KhipuResult
               }
-              // Anything that is not RESULT_OK still has to settle the promise.
-              // Dropping it leaves the merchant's `await` hanging forever.
-              else -> promise.reject(
-                OPERATION_CANCELED,
-                "The operation was closed before completing"
-              )
+            }.getOrNull()
+
+            if (result == null) {
+              // Nothing came back at all. Settling is what matters: dropping it
+              // leaves the merchant's `await` hanging forever.
+              promise.reject(NO_RESULT, "The operation finished without a result")
+            } else {
+              val returnMap = WritableNativeMap()
+              returnMap.putString("operationId", result.operationId)
+              returnMap.putString("result", result.result)
+              returnMap.putString("exitTitle", result.exitTitle)
+              returnMap.putString("exitMessage", result.exitMessage)
+              returnMap.putString("exitUrl", result.exitUrl)
+              returnMap.putString("failureReason", result.failureReason)
+              returnMap.putString("continueUrl", result.continueUrl)
+
+              val events = WritableNativeArray()
+              for (event in result.events) {
+                val eventMap = WritableNativeMap()
+                eventMap.putString("name", event.name)
+                eventMap.putString("type", event.type)
+                eventMap.putString("timestamp", event.timestamp)
+                events.pushMap(eventMap)
+              }
+              returnMap.putArray("events", events)
+              promise.resolve(returnMap)
             }
             startOperationPromise = null
           }
@@ -185,7 +182,6 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
     const val START_OPERATION_REQUEST = 10010101
     const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"
     const val NO_OPERATION_ID = "NO_OPERATION_ID"
-    const val OPERATION_CANCELED = "OPERATION_CANCELED"
     const val NO_RESULT = "NO_RESULT"
     const val OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS"
   }

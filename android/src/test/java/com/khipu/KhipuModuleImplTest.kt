@@ -2,10 +2,14 @@ package com.khipu
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
 import com.facebook.react.bridge.ActivityEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
+import com.khipu.client.KHIPU_RESULT_EXTRA
+import com.khipu.client.KhipuResult
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
@@ -79,6 +83,44 @@ class KhipuModuleImplTest {
 
     verify(promise, times(1)).reject(any<String>(), any<String>())
     verify(promise, never()).resolve(anyOrNull())
+  }
+
+  @Test
+  fun `a cancelled result that carries a payload is delivered, not rejected`() {
+    val context = reactContext()
+    val impl = KhipuModuleImpl(context)
+    val promise = mock<Promise>()
+
+    // What KhipuActivity.onCreate sends when it aborts an operation whose
+    // activity was destroyed for longer than its tolerance: RESULT_CANCELED,
+    // but carrying a full KhipuResult. Throwing that away would report the
+    // same outcome differently depending on invisible timing.
+    val payload = KhipuResult(
+      operationId = "op-1",
+      result = "ERROR",
+      failureReason = "USER_CANCELED"
+    )
+    val extras = mock<Bundle> { on { getSerializable(KHIPU_RESULT_EXTRA) } doReturn payload }
+    val data = mock<Intent> { on { this.extras } doReturn extras }
+
+    impl.startOperation(options(), promise)
+    // WritableNativeMap is JNI-backed and cannot be built off-device, so the
+    // resolve path stops at that boundary here. What this pins is the decision
+    // before it. The resolve path itself is covered end to end by the device
+    // matrix, where 20 of 24 cells reach a conciliated payment.
+    runCatching {
+      listenerOf(context).onActivityResult(
+        activity,
+        KhipuModuleImpl.START_OPERATION_REQUEST,
+        Activity.RESULT_CANCELED,
+        data
+      )
+    }
+
+    // Read the payload despite the result code, and do not reject it. Both
+    // assertions matter: without the first, doing nothing at all would pass.
+    verify(extras).getSerializable(KHIPU_RESULT_EXTRA)
+    verify(promise, never()).reject(any<String>(), any<String>())
   }
 
   @Test
