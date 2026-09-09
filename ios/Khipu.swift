@@ -3,17 +3,6 @@ import KhipuClientIOS
 @objc(KhipuImpl)
 public class KhipuImpl: NSObject {
 
-    /// Key window on iOS 12, where scenes do not exist and
-    /// `UIApplication.shared.windows` is the only source.
-    ///
-    /// Marked deprecated in 13.0 on purpose, so modern apps that never take
-    /// this branch do not get the iOS 15 deprecation warning.
-    @available(iOS, introduced: 2.0, deprecated: 13.0)
-    private static func legacyKeyWindow() -> UIWindow? {
-        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })
-            ?? UIApplication.shared.windows.first
-    }
-
     /// Topmost controller of the active scene, so we present on top of
     /// whatever the merchant has up instead of dismissing it.
     ///
@@ -21,22 +10,16 @@ public class KhipuImpl: NSObject {
     /// statically linked into the merchant app, so a public name like
     /// `topMostViewController()` could collide with theirs.
     ///
-    /// The `#available` is load-bearing: RN 0.70-0.72 declare an iOS 12.4
+    /// No `#available` guard: `min_ios_version_supported` is 13.4 on our RN
     /// floor and `connectedScenes` is 13+. `UIWindowScene.keyWindow` is
     /// deliberately avoided, being 15+.
     private static func presenter() -> UIViewController? {
-        var window: UIWindow?
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+        else { return nil }
 
-        if #available(iOS 13.0, *) {
-            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-            guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
-            else { return nil }
-            window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first
-        } else {
-            window = legacyKeyWindow()
-        }
-
-        guard let keyWindow = window else { return nil }
+        guard let keyWindow = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first
+        else { return nil }
 
         var controller = keyWindow.rootViewController
         while let presented = controller?.presentedViewController {
