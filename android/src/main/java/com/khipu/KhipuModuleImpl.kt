@@ -70,6 +70,12 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
                 returnMap.putArray("events", events)
                 promise.resolve(returnMap)
               }
+              // Anything that is not RESULT_OK still has to settle the promise.
+              // Dropping it leaves the merchant's `await` hanging forever.
+              else -> promise.reject(
+                OPERATION_CANCELED,
+                "The operation was closed before completing"
+              )
             }
             startOperationPromise = null
           }
@@ -82,6 +88,13 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
   }
 
   fun startOperation(operationOptions: ReadableMap, promise: Promise) {
+
+    // One operation at a time: overwriting the pending promise would leave the
+    // first caller's `await` hanging forever.
+    if (startOperationPromise != null) {
+      promise.reject(OPERATION_IN_PROGRESS, "Another operation is already in progress")
+      return
+    }
 
     val activity = reactContext.currentActivity
 
@@ -161,5 +174,7 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
     const val START_OPERATION_REQUEST = 10010101
     const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"
     const val NO_OPERATION_ID = "NO_OPERATION_ID"
+    const val OPERATION_CANCELED = "OPERATION_CANCELED"
+    const val OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS"
   }
 }
