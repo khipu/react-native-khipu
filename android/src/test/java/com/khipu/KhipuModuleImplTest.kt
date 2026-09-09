@@ -15,6 +15,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -83,6 +84,30 @@ class KhipuModuleImplTest {
 
     verify(promise, times(1)).reject(any<String>(), any<String>())
     verify(promise, never()).resolve(anyOrNull())
+  }
+
+  @Test
+  fun `a failure while preparing the launch settles the promise and frees the module`() {
+    val context = reactContext()
+    val impl = KhipuModuleImpl(context)
+    val first = mock<Promise>()
+
+    // Reading an option blows up. Under the old architecture nothing
+    // type-checks what JS sends, so a wrong type reaches these readers.
+    val bad = mock<ReadableMap> {
+      on { getString("operationId") } doReturn "op-1"
+      on { getMap("options") } doThrow RuntimeException("boom")
+    }
+
+    runCatching { impl.startOperation(bad, first) }
+
+    verify(first, times(1)).reject(any<String>(), any<String>())
+
+    // And the module has to stay usable: leaving the promise assigned would
+    // make the in-progress guard reject every later operation forever.
+    val second = mock<Promise>()
+    impl.startOperation(options("op-2"), second)
+    verify(second, never()).reject(eq(KhipuModuleImpl.OPERATION_IN_PROGRESS), any<String>())
   }
 
   @Test

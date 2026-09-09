@@ -112,11 +112,34 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
       return
     }
 
+    // Everything that can fail happens BEFORE the promise is stored. Under the
+    // old architecture nothing type-checks what JS sends, so a wrong type makes
+    // these readers throw; storing the promise first would leave it unsettled
+    // AND wedge the in-progress guard above for every later operation.
+    val intent = try {
+      getKhipuLauncherIntent(
+        context = activity.baseContext,
+        operationId = operationOptions.getString("operationId")!!,
+        options = buildOptions(operationOptions.getMap("options"))
+      )
+    } catch (error: Throwable) {
+      promise.reject(INVALID_OPTIONS, "Could not prepare the operation: ${error.message}")
+      return
+    }
+
     startOperationPromise = promise
+    try {
+      activity.startActivityForResult(intent, START_OPERATION_REQUEST)
+    } catch (error: Throwable) {
+      // The activity never started, so no result will ever arrive for it.
+      startOperationPromise = null
+      promise.reject(LAUNCH_FAILED, "Could not start the Khipu activity: ${error.message}")
+    }
+  }
 
-
+  /** Maps the incoming options onto the SDK builder. Throws on a bad payload. */
+  private fun buildOptions(options: ReadableMap?): KhipuOptions {
     val optionsBuilder: KhipuOptions.Builder = KhipuOptions.Builder()
-    val options = operationOptions.getMap("options")
 
     if (options !== null) {
 
@@ -162,12 +185,7 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
       }
     }
 
-    val intent = getKhipuLauncherIntent(
-      context = activity.baseContext,
-      operationId = operationOptions.getString("operationId")!!,
-      options = optionsBuilder.build()
-    )
-    activity.startActivityForResult(intent, START_OPERATION_REQUEST)
+    return optionsBuilder.build()
   }
 
   companion object {
@@ -183,6 +201,8 @@ class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
     const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"
     const val NO_OPERATION_ID = "NO_OPERATION_ID"
     const val NO_RESULT = "NO_RESULT"
+    const val INVALID_OPTIONS = "INVALID_OPTIONS"
+    const val LAUNCH_FAILED = "LAUNCH_FAILED"
     const val OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS"
   }
 }
