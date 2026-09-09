@@ -35,44 +35,44 @@ public class KhipuImpl: NSObject {
 
         var optionsBuilder = KhipuOptions.Builder()
 
-        if(startOperationOptions["options"] != nil) {
+        if(startOperationOptions[KhipuKeyOptions] != nil) {
 
-            let options = startOperationOptions["options"] as! NSDictionary
+            let options = startOperationOptions[KhipuKeyOptions] as! NSDictionary
 
-            if (options["title"] != nil) {
-                optionsBuilder = optionsBuilder.topBarTitle(options["title"]! as! String)
+            if (options[KhipuKeyTitle] != nil) {
+                optionsBuilder = optionsBuilder.topBarTitle(options[KhipuKeyTitle]! as! String)
             }
 
-            if (options["titleImageUrl"] != nil) {
-                            optionsBuilder = optionsBuilder.topBarImageUrl(options["titleImageUrl"]! as! String)
+            if (options[KhipuKeyTitleImageUrl] != nil) {
+                            optionsBuilder = optionsBuilder.topBarImageUrl(options[KhipuKeyTitleImageUrl]! as! String)
             }
 
-            if (options["skipExitPage"] != nil) {
-                optionsBuilder = optionsBuilder.skipExitPage(options["skipExitPage"]! as! Bool)
+            if (options[KhipuKeySkipExitPage] != nil) {
+                optionsBuilder = optionsBuilder.skipExitPage(options[KhipuKeySkipExitPage]! as! Bool)
             }
 
-            if (options["skipExitSuccessPage"] != nil) {
-                optionsBuilder = optionsBuilder.skipExitSuccessPage(options["skipExitSuccessPage"]! as! Bool)
+            if (options[KhipuKeySkipExitSuccessPage] != nil) {
+                optionsBuilder = optionsBuilder.skipExitSuccessPage(options[KhipuKeySkipExitSuccessPage]! as! Bool)
             }
 
-            if (options["showFooter"] != nil) {
-                optionsBuilder = optionsBuilder.showFooter(options["showFooter"]! as! Bool)
+            if (options[KhipuKeyShowFooter] != nil) {
+                optionsBuilder = optionsBuilder.showFooter(options[KhipuKeyShowFooter]! as! Bool)
             }
 
-            if (options["showMerchantLogo"] != nil) {
-                optionsBuilder = optionsBuilder.showMerchantLogo(options["showMerchantLogo"]! as! Bool)
+            if (options[KhipuKeyShowMerchantLogo] != nil) {
+                optionsBuilder = optionsBuilder.showMerchantLogo(options[KhipuKeyShowMerchantLogo]! as! Bool)
             }
 
-            if (options["showPaymentDetails"] != nil) {
-                optionsBuilder = optionsBuilder.showPaymentDetails(options["showPaymentDetails"]! as! Bool)
+            if (options[KhipuKeyShowPaymentDetails] != nil) {
+                optionsBuilder = optionsBuilder.showPaymentDetails(options[KhipuKeyShowPaymentDetails]! as! Bool)
             }
 
-            if (options["locale"] != nil) {
-                optionsBuilder = optionsBuilder.locale(options["locale"]! as! String)
+            if (options[KhipuKeyLocale] != nil) {
+                optionsBuilder = optionsBuilder.locale(options[KhipuKeyLocale]! as! String)
             }
 
-            if (options["theme"] != nil) {
-                let theme = options["theme"]! as! String
+            if (options[KhipuKeyTheme] != nil) {
+                let theme = options[KhipuKeyTheme]! as! String
                 if(theme == "light") {
                     optionsBuilder = optionsBuilder.theme(.light)
                 } else if (theme == "dark") {
@@ -82,46 +82,46 @@ public class KhipuImpl: NSObject {
                 }
             }
 
-            if (options["colors"] != nil) {
-                let colors = options["colors"] as! NSDictionary
+            if (options[KhipuKeyColors] != nil) {
+                let colors = options[KhipuKeyColors] as! NSDictionary
 
                 var colorsBuilder = KhipuColors.Builder()
 
-                if (colors["lightBackground"] != nil) {
-                    colorsBuilder = colorsBuilder.lightBackground(colors["lightBackground"]! as! String)
+                if (colors[KhipuKeyLightBackground] != nil) {
+                    colorsBuilder = colorsBuilder.lightBackground(colors[KhipuKeyLightBackground]! as! String)
                 }
-                if (colors["lightOnBackground"] != nil) {
-                    colorsBuilder = colorsBuilder.lightOnBackground(colors["lightOnBackground"]! as! String)
+                if (colors[KhipuKeyLightOnBackground] != nil) {
+                    colorsBuilder = colorsBuilder.lightOnBackground(colors[KhipuKeyLightOnBackground]! as! String)
                 }
-                if (colors["lightPrimary"] != nil) {
-                    colorsBuilder = colorsBuilder.lightPrimary(colors["lightPrimary"]! as! String)
+                if (colors[KhipuKeyLightPrimary] != nil) {
+                    colorsBuilder = colorsBuilder.lightPrimary(colors[KhipuKeyLightPrimary]! as! String)
                 }
-                if (colors["lightOnPrimary"] != nil) {
-                    colorsBuilder = colorsBuilder.lightOnPrimary(colors["lightOnPrimary"]! as! String)
+                if (colors[KhipuKeyLightOnPrimary] != nil) {
+                    colorsBuilder = colorsBuilder.lightOnPrimary(colors[KhipuKeyLightOnPrimary]! as! String)
                 }
-                if (colors["lightTopBarContainer"] != nil) {
-                    colorsBuilder = colorsBuilder.lightTopBarContainer(colors["lightTopBarContainer"]! as! String)
+                if (colors[KhipuKeyLightTopBarContainer] != nil) {
+                    colorsBuilder = colorsBuilder.lightTopBarContainer(colors[KhipuKeyLightTopBarContainer]! as! String)
                 }
-                if (colors["lightOnTopBarContainer"] != nil) {
-                    colorsBuilder = colorsBuilder.lightOnTopBarContainer(colors["lightOnTopBarContainer"]! as! String)
+                if (colors[KhipuKeyLightOnTopBarContainer] != nil) {
+                    colorsBuilder = colorsBuilder.lightOnTopBarContainer(colors[KhipuKeyLightOnTopBarContainer]! as! String)
                 }
-                if (colors["darkBackground"] != nil) {
-                    colorsBuilder = colorsBuilder.darkBackground(colors["darkBackground"]! as! String)
+                if (colors[KhipuKeyDarkBackground] != nil) {
+                    colorsBuilder = colorsBuilder.darkBackground(colors[KhipuKeyDarkBackground]! as! String)
                 }
-                if (colors["darkOnBackground"] != nil) {
-                    colorsBuilder = colorsBuilder.darkOnBackground(colors["darkOnBackground"]! as! String)
+                if (colors[KhipuKeyDarkOnBackground] != nil) {
+                    colorsBuilder = colorsBuilder.darkOnBackground(colors[KhipuKeyDarkOnBackground]! as! String)
                 }
-                if (colors["darkPrimary"] != nil) {
-                    colorsBuilder = colorsBuilder.darkPrimary(colors["darkPrimary"]! as! String)
+                if (colors[KhipuKeyDarkPrimary] != nil) {
+                    colorsBuilder = colorsBuilder.darkPrimary(colors[KhipuKeyDarkPrimary]! as! String)
                 }
-                if (colors["darkOnPrimary"] != nil) {
-                    colorsBuilder = colorsBuilder.darkOnPrimary(colors["darkOnPrimary"]! as! String)
+                if (colors[KhipuKeyDarkOnPrimary] != nil) {
+                    colorsBuilder = colorsBuilder.darkOnPrimary(colors[KhipuKeyDarkOnPrimary]! as! String)
                 }
-                if (colors["darkTopBarContainer"] != nil) {
-                    colorsBuilder = colorsBuilder.darkTopBarContainer(colors["darkTopBarContainer"]! as! String)
+                if (colors[KhipuKeyDarkTopBarContainer] != nil) {
+                    colorsBuilder = colorsBuilder.darkTopBarContainer(colors[KhipuKeyDarkTopBarContainer]! as! String)
                 }
-                if (colors["darkOnTopBarContainer"] != nil) {
-                    colorsBuilder = colorsBuilder.darkOnTopBarContainer(colors["darkOnTopBarContainer"]! as! String)
+                if (colors[KhipuKeyDarkOnTopBarContainer] != nil) {
+                    colorsBuilder = colorsBuilder.darkOnTopBarContainer(colors[KhipuKeyDarkOnTopBarContainer]! as! String)
                 }
 
 
@@ -135,7 +135,7 @@ public class KhipuImpl: NSObject {
                 return
             }
 
-            guard let operationId = startOperationOptions["operationId"] else {
+            guard let operationId = startOperationOptions[KhipuKeyOperationId] else {
                 reject("NO_OPERATION_ID", "OperationId is needed to start the operation", NSError())
                 return
             }
@@ -144,18 +144,18 @@ public class KhipuImpl: NSObject {
                                  operationId: operationId as! String,
                                  options: optionsBuilder.build()) { result in
                 resolve([
-                    "operationId": result.operationId,
-                    "result": result.result,
-                    "exitTitle": result.exitTitle,
-                    "exitMessage": result.exitMessage,
-                    "exitUrl": result.exitUrl as Any,
-                    "failureReason": result.failureReason as Any,
-                    "continueUrl": result.continueUrl as Any,
-                    "events": result.events.map({ event in
+                    KhipuKeyOperationId: result.operationId,
+                    KhipuKeyResult: result.result,
+                    KhipuKeyExitTitle: result.exitTitle,
+                    KhipuKeyExitMessage: result.exitMessage,
+                    KhipuKeyExitUrl: result.exitUrl as Any,
+                    KhipuKeyFailureReason: result.failureReason as Any,
+                    KhipuKeyContinueUrl: result.continueUrl as Any,
+                    KhipuKeyEvents: result.events.map({ event in
                         return [
-                            "name": event.name,
-                            "type": event.type,
-                            "timestamp": event.timestamp
+                            KhipuKeyName: event.name,
+                            KhipuKeyType: event.type,
+                            KhipuKeyTimestamp: event.timestamp
                         ]
                     })
                 ])

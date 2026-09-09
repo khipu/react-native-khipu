@@ -61,10 +61,24 @@ function publicRedeclarations(): Redeclaration[] {
   }));
 }
 
-/** Keys Swift reads from the incoming NSDictionary. */
+/** Resolves `KhipuKeyX` identifiers back to the string they stand for. */
+function viaConstants(src: string, re: RegExp): Set<string> {
+  const consts = iosKeyConstants();
+  return new Set(
+    [...src.matchAll(re)].map((m) => {
+      const value = consts.get(m[1] as string);
+      // An unknown constant means Swift names one KhipuKeys does not define,
+      // which would not compile — but silently shrinking the set here would
+      // make the contract checks below pass on nothing.
+      if (!value) throw new Error(`${m[1]} is not defined in ios/KhipuKeys.m`);
+      return value;
+    })
+  );
+}
+
+/** Keys Swift reads from the incoming NSDictionary, through the constants. */
 function swiftReadKeys(): Set<string> {
-  const src = read('ios/Khipu.swift');
-  return new Set([...src.matchAll(/\["(\w+)"\]/g)].map((m) => m[1] as string));
+  return viaConstants(read('ios/Khipu.swift'), /\[(KhipuKey\w+)\]/g);
 }
 
 /** Keys Kotlin reads from the incoming ReadableMap. */
@@ -79,16 +93,57 @@ function kotlinWriteKeys(): Set<string> {
   return new Set([...src.matchAll(reKotlinWrite())].map((m) => m[1] as string));
 }
 
-/** Keys Swift writes back. */
+/** Keys Swift writes back, through the constants. */
 function swiftWriteKeys(): Set<string> {
-  const src = read('ios/Khipu.swift');
-  return new Set(
-    [...src.matchAll(/^\s*"(\w+)":/gm)].map((m) => m[1] as string)
-  );
+  return viaConstants(read('ios/Khipu.swift'), /^\s*(KhipuKey\w+):/gm);
 }
 
 const missing = (a: Set<string>, b: Set<string>) =>
   [...a].filter((k) => !b.has(k)).sort();
+
+/**
+ * Key constants shared by `ios/Khipu.mm` and `ios/Khipu.swift`, so the two
+ * sides of the dictionary cannot drift: the compiler checks the constant name
+ * at both ends, and the literal exists once.
+ */
+function iosKeyConstants(): Map<string, string> {
+  const src = read('ios/KhipuKeys.m');
+  return new Map(
+    [...src.matchAll(/NSString \* const (\w+) = @"(\w+)";/g)].map((m) => [
+      m[1] as string,
+      m[2] as string,
+    ])
+  );
+}
+
+describe('ios: every dictionary key is declared once', () => {
+  const declared = () =>
+    new Set([
+      ...tsKeys('StartOperationOptions'),
+      ...tsKeys('KhipuOptions'),
+      ...tsKeys('KhipuColors'),
+      ...tsKeys('KhipuResult'),
+      ...tsKeys('KhipuEvent'),
+    ]);
+
+  it('KhipuKeys carries a constant for every key the spec declares', () => {
+    expect(missing(declared(), new Set(iosKeyConstants().values()))).toEqual(
+      []
+    );
+  });
+
+  it('no key is spelled as a literal in Khipu.mm or Khipu.swift', () => {
+    // A literal here is the bug this indirection exists to prevent: rename the
+    // key on one side and the other silently reads nil.
+    const keys = declared();
+    for (const file of ['ios/Khipu.mm', 'ios/Khipu.swift']) {
+      const literals = [...read(file).matchAll(/@?"(\w+)"/g)]
+        .map((m) => m[1] as string)
+        .filter((k) => keys.has(k));
+      expect({ file, literals }).toEqual({ file, literals: [] });
+    }
+  });
+});
 
 describe('the extractors still bite', () => {
   // Without these, a reformat that breaks a pattern collapses the sets to empty

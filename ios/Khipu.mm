@@ -1,4 +1,5 @@
 #import "Khipu.h"
+#import "KhipuKeys.h"
 
 #ifdef RCT_NEW_ARCH_ENABLED
 
@@ -33,37 +34,37 @@ static void KhipuPutBool(NSMutableDictionary *target, NSString *key, const std::
 static NSDictionary *KhipuColorsAsDictionary(const JS::NativeKhipu::KhipuColors &colors)
 {
   NSMutableDictionary *result = [NSMutableDictionary new];
-  KhipuPutString(result, @"lightBackground", colors.lightBackground());
-  KhipuPutString(result, @"lightOnBackground", colors.lightOnBackground());
-  KhipuPutString(result, @"lightPrimary", colors.lightPrimary());
-  KhipuPutString(result, @"lightOnPrimary", colors.lightOnPrimary());
-  KhipuPutString(result, @"lightTopBarContainer", colors.lightTopBarContainer());
-  KhipuPutString(result, @"lightOnTopBarContainer", colors.lightOnTopBarContainer());
-  KhipuPutString(result, @"darkBackground", colors.darkBackground());
-  KhipuPutString(result, @"darkOnBackground", colors.darkOnBackground());
-  KhipuPutString(result, @"darkPrimary", colors.darkPrimary());
-  KhipuPutString(result, @"darkOnPrimary", colors.darkOnPrimary());
-  KhipuPutString(result, @"darkTopBarContainer", colors.darkTopBarContainer());
-  KhipuPutString(result, @"darkOnTopBarContainer", colors.darkOnTopBarContainer());
+  KhipuPutString(result, KhipuKeyLightBackground, colors.lightBackground());
+  KhipuPutString(result, KhipuKeyLightOnBackground, colors.lightOnBackground());
+  KhipuPutString(result, KhipuKeyLightPrimary, colors.lightPrimary());
+  KhipuPutString(result, KhipuKeyLightOnPrimary, colors.lightOnPrimary());
+  KhipuPutString(result, KhipuKeyLightTopBarContainer, colors.lightTopBarContainer());
+  KhipuPutString(result, KhipuKeyLightOnTopBarContainer, colors.lightOnTopBarContainer());
+  KhipuPutString(result, KhipuKeyDarkBackground, colors.darkBackground());
+  KhipuPutString(result, KhipuKeyDarkOnBackground, colors.darkOnBackground());
+  KhipuPutString(result, KhipuKeyDarkPrimary, colors.darkPrimary());
+  KhipuPutString(result, KhipuKeyDarkOnPrimary, colors.darkOnPrimary());
+  KhipuPutString(result, KhipuKeyDarkTopBarContainer, colors.darkTopBarContainer());
+  KhipuPutString(result, KhipuKeyDarkOnTopBarContainer, colors.darkOnTopBarContainer());
   return result;
 }
 
 static NSDictionary *KhipuOptionsAsDictionary(const JS::NativeKhipu::KhipuOptions &options)
 {
   NSMutableDictionary *result = [NSMutableDictionary new];
-  KhipuPutString(result, @"locale", options.locale());
-  KhipuPutString(result, @"title", options.title());
-  KhipuPutString(result, @"titleImageUrl", options.titleImageUrl());
-  KhipuPutBool(result, @"skipExitPage", options.skipExitPage());
-  KhipuPutBool(result, @"skipExitSuccessPage", options.skipExitSuccessPage());
-  KhipuPutBool(result, @"showFooter", options.showFooter());
-  KhipuPutBool(result, @"showMerchantLogo", options.showMerchantLogo());
-  KhipuPutBool(result, @"showPaymentDetails", options.showPaymentDetails());
-  KhipuPutString(result, @"theme", options.theme());
+  KhipuPutString(result, KhipuKeyLocale, options.locale());
+  KhipuPutString(result, KhipuKeyTitle, options.title());
+  KhipuPutString(result, KhipuKeyTitleImageUrl, options.titleImageUrl());
+  KhipuPutBool(result, KhipuKeySkipExitPage, options.skipExitPage());
+  KhipuPutBool(result, KhipuKeySkipExitSuccessPage, options.skipExitSuccessPage());
+  KhipuPutBool(result, KhipuKeyShowFooter, options.showFooter());
+  KhipuPutBool(result, KhipuKeyShowMerchantLogo, options.showMerchantLogo());
+  KhipuPutBool(result, KhipuKeyShowPaymentDetails, options.showPaymentDetails());
+  KhipuPutString(result, KhipuKeyTheme, options.theme());
 
   const std::optional<JS::NativeKhipu::KhipuColors> colors = options.colors();
   if (colors.has_value()) {
-    result[@"colors"] = KhipuColorsAsDictionary(colors.value());
+    result[KhipuKeyColors] = KhipuColorsAsDictionary(colors.value());
   }
 
   return result;
@@ -88,11 +89,11 @@ RCT_EXPORT_MODULE()
                 reject:(RCTPromiseRejectBlock)reject
 {
   NSMutableDictionary *payload = [NSMutableDictionary new];
-  KhipuPutString(payload, @"operationId", options.operationId());
+  KhipuPutString(payload, KhipuKeyOperationId, options.operationId());
 
   const std::optional<JS::NativeKhipu::KhipuOptions> khipuOptions = options.options();
   if (khipuOptions.has_value()) {
-    payload[@"options"] = KhipuOptionsAsDictionary(khipuOptions.value());
+    payload[KhipuKeyOptions] = KhipuOptionsAsDictionary(khipuOptions.value());
   }
 
   [_impl startOperation:payload resolve:resolve reject:reject];
