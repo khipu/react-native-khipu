@@ -135,7 +135,12 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  implementation 'com.khipu:khipu-client-android:2.27.0'
+  // 2.28.0 sube el pin de com.khipu.khenshin:protocol de 1.0.59 a 1.0.60. Sin eso,
+  // un FailureReasonType USER_DISCONNECTED --que 1.0.59 no conoce-- explota como
+  // IOException en el hilo del socket y se lleva el proceso de la app del comercio.
+  // Medido: el diff de API del cliente entre 2.27.0 y 2.28.0 es vacio y el unico
+  // cambio de bytecode es la cadena de version, asi que el salto es solo ese pin.
+  implementation 'com.khipu:khipu-client-android:2.28.0'
 
   // Test-only: never reaches the AAR merchants consume.
   testImplementation "junit:junit:4.13.2"
