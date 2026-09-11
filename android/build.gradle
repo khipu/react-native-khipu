@@ -135,14 +135,15 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  // 2.28.3 o mas nuevo es obligatorio: hasta 2.28.0 un mensaje de socket que no se
-  // pudiera deserializar explotaba en el hilo del socket SIN try/catch y se llevaba
-  // el proceso de la app del comercio, con lo cual la promesa de startOperation no
-  // se podia resolver ni rechazar. El guard llego en 2.28.1 (IKW-1232) y 2.28.3
-  // arreglo que dejaba afuera OPERATION_WARNING, que tambien es terminal (IKW-1237).
-  // Verificado en el AAR publicado: SocketMessageGuardKt.runGuarded nombra los
-  // cuatro MessageType terminales.
-  implementation 'com.khipu:khipu-client-android:2.28.3'
+  // 2.28.4 o mas nuevo es obligatorio. Hasta 2.28.0 un mensaje de socket que no se
+  // pudiera deserializar explotaba en el hilo del socket SIN try/catch y mataba el
+  // proceso de la app del comercio. El guard llego en 2.28.1 (IKW-1232), 2.28.3
+  // incluyo OPERATION_WARNING entre los terminales (IKW-1237), y 2.28.4 hace que un
+  // terminal indescifrable llame a returnToApp(): recien ahi la promesa RESUELVE
+  // sola, con result="ERROR" y failureReason=null, en vez de dejar al pagador
+  // varado (IKW-1240). Verificado en el AAR publicado: runGuarded nombra
+  // returnToApp, que no estaba en 2.28.3.
+  implementation 'com.khipu:khipu-client-android:2.28.4'
 
   // Test-only: never reaches the AAR merchants consume.
   testImplementation "junit:junit:4.13.2"

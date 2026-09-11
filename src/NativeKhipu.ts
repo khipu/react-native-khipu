@@ -51,10 +51,17 @@ export type KhipuResult = {
   operationId: string;
   exitTitle: string;
   exitMessage: string;
-  exitUrl?: string;
+  /**
+   * `| null` is not decoration: both platforms emit null rather than omitting
+   * the key. Kotlin calls `putString(key, null)` and Swift bridges `nil as Any`
+   * to NSNull, so a merchant testing `=== undefined` gets a false negative.
+   * Measured to survive RN 0.75.5's ObjC++ codegen, unlike a literal union:
+   * `string | null` is nullability, not a union of types.
+   */
+  exitUrl?: string | null;
   result: string;
-  failureReason?: string;
-  continueUrl?: string;
+  failureReason?: string | null;
+  continueUrl?: string | null;
   events: Array<KhipuEvent>;
 };
 
