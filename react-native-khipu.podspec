@@ -31,16 +31,21 @@ Pod::Spec.new do |s|
   # the last version published to trunk before that date. Those merchants need
   # to upgrade React Native to get newer SDK releases.
   #
+  # 2.16.6 or newer is required: an unreadable socket frame used to kill the
+  # merchant's app, and a terminal message that failed to parse left the payer
+  # with no way out and no callback (IKW-1234). Same defect class Android had,
+  # with the opposite symptom. 2.16.6 also pins Starscream at 4.0.8 (IKW-1235).
+  #
   # The SPM path requires the app to call khipu_fix_spm_modulemaps from its
   # post_install. See ios/khipu_spm_fix.rb and the README.
   if respond_to?(:spm_dependency, true)
     spm_dependency(s,
       url: "https://github.com/khipu/KhipuClientIOS.git",
-      requirement: { kind: "exactVersion", version: "2.16.5" },
+      requirement: { kind: "exactVersion", version: "2.16.6" },
       products: ["KhipuClientIOS"]
     )
   else
-    s.dependency "KhipuClientIOS", "2.16.5"
+    s.dependency "KhipuClientIOS", "2.16.6"
   end
 
   # install_modules_dependencies exists from React Native 0.71 on. The guard is

@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/khipu/KhipuClientIOS.git",
       "state" : {
-        "revision" : "bcd21ca4eb69835026782d18a19f81a7f030ecbe",
-        "version" : "2.16.5"
+        "revision" : "972c3b4026dddf43c6a6bf0924d57be36ece734b",
+        "version" : "2.16.6"
       }
     },
     {
