@@ -1,0 +1,208 @@
+package com.khipu
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Build
+import com.facebook.react.bridge.BaseActivityEventListener
+import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableNativeArray
+import com.facebook.react.bridge.WritableNativeMap
+import com.khipu.client.KHIPU_RESULT_EXTRA
+import com.khipu.client.KhipuColors
+import com.khipu.client.KhipuOptions
+import com.khipu.client.KhipuResult
+import com.khipu.client.getKhipuLauncherIntent
+
+/**
+ * All module logic, once, with no architecture coupling.
+ *
+ * Lives in the `main` source set, compiled under both architectures. Only the
+ * module *declaration* is duplicated, in `src/newarch/java` and
+ * `src/oldarch/java`; both delegate here.
+ *
+ * This class must reference neither the generated spec (new architecture only)
+ * nor a React base class (that would pin it to one hierarchy), which is why it
+ * stands alone instead of being a superclass.
+ */
+class KhipuModuleImpl(private val reactContext: ReactApplicationContext) {
+
+  private var startOperationPromise: Promise? = null
+
+  private val activityEventListener =
+    object : BaseActivityEventListener() {
+      override fun onActivityResult(
+        activity: Activity,
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+      ) {
+        if (requestCode == START_OPERATION_REQUEST) {
+          startOperationPromise?.let { promise ->
+            // The SDK delivers a KhipuResult on BOTH result codes, so the
+            // payload decides, not resultCode. KhipuActivity.onCreate aborts an
+            // operation whose activity was destroyed past its tolerance with
+            // setResult(RESULT_CANCELED) carrying result="ERROR" and
+            // failureReason="USER_CANCELED"; an ordinary cancel goes through the
+            // dialog and comes back as RESULT_OK with the same shape. Rejecting
+            // the first would report one outcome two different ways depending on
+            // a timing the merchant cannot see, and iOS always resolves.
+            val result = runCatching {
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.extras?.getSerializable(KHIPU_RESULT_EXTRA, KhipuResult::class.java)
+              } else {
+                data?.extras?.getSerializable(KHIPU_RESULT_EXTRA) as? KhipuResult
+              }
+            }.getOrNull()
+
+            if (result == null) {
+              // Nothing came back at all. Settling is what matters: dropping it
+              // leaves the merchant's `await` hanging forever.
+              promise.reject(NO_RESULT, "The operation finished without a result")
+            } else {
+              val returnMap = WritableNativeMap()
+              returnMap.putString("operationId", result.operationId)
+              returnMap.putString("result", result.result)
+              returnMap.putString("exitTitle", result.exitTitle)
+              returnMap.putString("exitMessage", result.exitMessage)
+              returnMap.putString("exitUrl", result.exitUrl)
+              returnMap.putString("failureReason", result.failureReason)
+              returnMap.putString("continueUrl", result.continueUrl)
+
+              val events = WritableNativeArray()
+              for (event in result.events) {
+                val eventMap = WritableNativeMap()
+                eventMap.putString("name", event.name)
+                eventMap.putString("type", event.type)
+                eventMap.putString("timestamp", event.timestamp)
+                events.pushMap(eventMap)
+              }
+              returnMap.putArray("events", events)
+              promise.resolve(returnMap)
+            }
+            startOperationPromise = null
+          }
+        }
+      }
+    }
+
+  init {
+    reactContext.addActivityEventListener(activityEventListener)
+  }
+
+  fun startOperation(operationOptions: ReadableMap, promise: Promise) {
+
+    // One operation at a time: overwriting the pending promise would leave the
+    // first caller's `await` hanging forever.
+    if (startOperationPromise != null) {
+      promise.reject(OPERATION_IN_PROGRESS, "Another operation is already in progress")
+      return
+    }
+
+    val activity = reactContext.currentActivity
+
+    if (activity == null) {
+      promise.reject(NO_AVAILABLE_VIEW, "Activity doesn't exist")
+      return
+    }
+
+    if (operationOptions.getString("operationId") == null) {
+      promise.reject(NO_OPERATION_ID, "OperationId is needed to start the operation")
+      return
+    }
+
+    // Everything that can fail happens BEFORE the promise is stored. Under the
+    // old architecture nothing type-checks what JS sends, so a wrong type makes
+    // these readers throw; storing the promise first would leave it unsettled
+    // AND wedge the in-progress guard above for every later operation.
+    val intent = try {
+      getKhipuLauncherIntent(
+        context = activity.baseContext,
+        operationId = operationOptions.getString("operationId")!!,
+        options = buildOptions(operationOptions.getMap("options"))
+      )
+    } catch (error: Throwable) {
+      promise.reject(INVALID_OPTIONS, "Could not prepare the operation: ${error.message}")
+      return
+    }
+
+    startOperationPromise = promise
+    try {
+      activity.startActivityForResult(intent, START_OPERATION_REQUEST)
+    } catch (error: Throwable) {
+      // The activity never started, so no result will ever arrive for it.
+      startOperationPromise = null
+      promise.reject(LAUNCH_FAILED, "Could not start the Khipu activity: ${error.message}")
+    }
+  }
+
+  /** Maps the incoming options onto the SDK builder. Throws on a bad payload. */
+  private fun buildOptions(options: ReadableMap?): KhipuOptions {
+    val optionsBuilder: KhipuOptions.Builder = KhipuOptions.Builder()
+
+    if (options !== null) {
+
+      options.getString("title")?.let { optionsBuilder.topBarTitle(it) }
+      options.getString("titleImageUrl")?.let { optionsBuilder.topBarImageUrl(it) }
+      if (options.hasKey("skipExitPage")) optionsBuilder.skipExitPage(options.getBoolean("skipExitPage"))
+      if (options.hasKey("skipExitSuccessPage")) optionsBuilder.skipExitSuccessPage(options.getBoolean("skipExitSuccessPage"))
+      if (options.hasKey("showFooter")) optionsBuilder.showFooter(options.getBoolean("showFooter"))
+      if (options.hasKey("showMerchantLogo")) optionsBuilder.showMerchantLogo(options.getBoolean("showMerchantLogo"))
+      if (options.hasKey("showPaymentDetails")) optionsBuilder.showPaymentDetails(options.getBoolean("showPaymentDetails"))
+      options.getString("locale")?.let { optionsBuilder.locale(it) }
+      if (options.hasKey("theme")) {
+        val theme: String = options.getString("theme")!!
+        if ("light" == theme) {
+          optionsBuilder.theme(KhipuOptions.Theme.LIGHT)
+        } else if ("dark" == theme) {
+          optionsBuilder.theme(KhipuOptions.Theme.DARK)
+        } else if ("system" == theme) {
+          optionsBuilder.theme(KhipuOptions.Theme.SYSTEM)
+        }
+      }
+
+      // Only when the merchant sent colors, matching ios/Khipu.swift. Measured
+      // to be a no-op today (getColorFromHex returns the fallback for a null
+      // hex, so an all-null KhipuColors yields the untouched scheme), but the
+      // builder default is null and the two platforms should not differ.
+      if (options.hasKey("colors")) {
+        val colors = options.getMap("colors")!!
+        val colorsBuilder: KhipuColors.Builder = KhipuColors.Builder()
+        colors.getString("lightBackground")?.let { colorsBuilder.lightBackground(it) }
+        colors.getString("lightOnBackground")?.let { colorsBuilder.lightOnBackground(it) }
+        colors.getString("lightPrimary")?.let { colorsBuilder.lightPrimary(it) }
+        colors.getString("lightOnPrimary")?.let { colorsBuilder.lightOnPrimary(it) }
+        colors.getString("lightTopBarContainer")?.let { colorsBuilder.lightTopBarContainer(it) }
+        colors.getString("lightOnTopBarContainer")?.let { colorsBuilder.lightOnTopBarContainer(it) }
+        colors.getString("darkBackground")?.let { colorsBuilder.darkBackground(it) }
+        colors.getString("darkOnBackground")?.let { colorsBuilder.darkOnBackground(it) }
+        colors.getString("darkPrimary")?.let { colorsBuilder.darkPrimary(it) }
+        colors.getString("darkOnPrimary")?.let { colorsBuilder.darkOnPrimary(it) }
+        colors.getString("darkTopBarContainer")?.let { colorsBuilder.darkTopBarContainer(it) }
+        colors.getString("darkOnTopBarContainer")?.let { colorsBuilder.darkOnTopBarContainer(it) }
+        optionsBuilder.colors(colorsBuilder.build())
+      }
+    }
+
+    return optionsBuilder.build()
+  }
+
+  companion object {
+    /**
+     * The name lives here rather than on `KhipuModule`: under the new
+     * architecture that class inherits a static `NAME` from the generated
+     * spec and under the old one it inherits nothing, so `KhipuModule.NAME`
+     * would resolve differently per architecture. `KhipuPackage` always
+     * references this constant.
+     */
+    const val NAME = "Khipu"
+    const val START_OPERATION_REQUEST = 10010101
+    const val NO_AVAILABLE_VIEW = "NO_AVAILABLE_VIEW"
+    const val NO_OPERATION_ID = "NO_OPERATION_ID"
+    const val NO_RESULT = "NO_RESULT"
+    const val INVALID_OPTIONS = "INVALID_OPTIONS"
+    const val LAUNCH_FAILED = "LAUNCH_FAILED"
+    const val OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS"
+  }
+}

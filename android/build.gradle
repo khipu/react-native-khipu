@@ -28,6 +28,15 @@ apply plugin: "kotlin-android"
 
 if (isNewArchitectureEnabled()) {
   apply plugin: "com.facebook.react"
+
+  // TurboModule codegen. `libraryName` must match `codegenConfig.name` in
+  // package.json. This lives inside the guard because the `react { }` block is
+  // contributed by the plugin applied just above.
+  react {
+    jsRootDir = file("../src/")
+    libraryName = "KhipuSpec"
+    codegenJavaPackageName = "com.khipu"
+  }
 }
 
 def getExtOrDefault(name) {
@@ -48,6 +57,16 @@ def supportsNamespace() {
 }
 
 android {
+  // La *declaracion* del modulo depende de la arquitectura y la logica no:
+  //   src/main/java/com/khipu/KhipuModuleImpl.kt   -> la logica, una sola vez
+  //   src/newarch/java/com/khipu/KhipuModule.kt    -> extiende NativeKhipuSpec (codegen)
+  //   src/oldarch/java/com/khipu/KhipuModule.kt    -> ReactContextBaseJavaModule + @ReactMethod
+  // Solo uno de los dos entra al compilador, elegido por el mismo predicado que
+  // decide si se aplica el plugin `com.facebook.react` (y por lo tanto si existe
+  // la clase generada). Sin esto, la arquitectura vieja muere con
+  // "Unresolved reference 'NativeKhipuSpec'".
+  sourceSets.main.java.srcDirs += isNewArchitectureEnabled() ? ['src/newarch/java'] : ['src/oldarch/java']
+
   if (supportsNamespace()) {
     namespace "com.khipu"
 
@@ -80,6 +99,12 @@ android {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
   }
+
+  // JVM unit tests for the module logic. Without this, every android.jar stub
+  // throws "not mocked" and the tests cannot construct so much as an Intent.
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
 }
 
 // El plugin de Gradle de React Native fija el target de Java de este modulo por
@@ -110,6 +135,36 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  implementation 'com.khipu:khipu-client-android:2.27.0'
+  // 2.28.5 o mas nuevo es obligatorio. Hasta 2.28.0 un mensaje de socket que no se
+  // pudiera deserializar explotaba en el hilo del socket SIN try/catch y mataba el
+  // proceso de la app del comercio. El guard llego en 2.28.1 (IKW-1232), 2.28.3
+  // incluyo OPERATION_WARNING entre los terminales (IKW-1237), y 2.28.4 hace que un
+  // terminal indescifrable llame a returnToApp(): recien ahi la promesa RESUELVE
+  // sola, con result="ERROR" y failureReason=null, en vez de dejar al pagador
+  // varado (IKW-1240). Verificado en el AAR publicado: runGuarded nombra
+  // returnToApp, que no estaba en 2.28.3.
+  //
+  // 2.28.5 cierra IKW-1247, que es el peor de la serie para nosotros: KhipuCookieJar
+  // guardaba las cookies en un HashSet sin sincronizar, y OkHttp lo llama desde varios
+  // hilos del Dispatcher a la vez. El ConcurrentModificationException corre en un hilo
+  // de fondo y NO esta atrapado, asi que mata el proceso. Cuando el proceso muere no
+  // hay callback ni excepcion: la promesa no resuelve NI rechaza, desaparece. Es el
+  // unico modo de falla conocido donde el puente no puede devolver nada, porque no
+  // queda proceso donde correr el reject.
+  // Verificado en el AAR publicado, con control diferencial contra 2.28.4:
+  //   javap -p com/khipu/client/socket/KhipuCookieJar.class
+  //     2.28.5: public synchronized void saveFromResponse(...)  / synchronized loadForRequest
+  //     2.28.4: public void saveFromResponse(...)               / sin synchronized
+  //   y en las DOS versiones persistToDisk y saveCookie siguen en `private final`,
+  //   que es el control positivo: el chequeo no esta marcando todo como sincronizado.
+  // OJO con el marcador intuitivo: contar `monitorenter` da 0 en la version ARREGLADA
+  // y seria un falso negativo. @Synchronized a nivel de metodo pone ACC_SYNCHRONIZED
+  // en el descriptor, no emite esa instruccion.
+  implementation 'com.khipu:khipu-client-android:2.28.5'
+
+  // Test-only: never reaches the AAR merchants consume.
+  testImplementation "junit:junit:4.13.2"
+  testImplementation "org.mockito:mockito-core:5.12.0"
+  testImplementation "org.mockito.kotlin:mockito-kotlin:5.3.1"
 }
 

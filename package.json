@@ -1,6 +1,6 @@
 {
   "name": "react-native-khipu",
-  "version": "3.0.5",
+  "version": "3.1.0-turbomodule.0",
   "description": "Khipu for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -80,7 +80,7 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": ">=0.74"
   },
   "workspaces": [
     "example"
@@ -136,7 +136,8 @@
   },
   "eslintIgnore": [
     "node_modules/",
-    "lib/"
+    "lib/",
+    "build/"
   ],
   "prettier": {
     "quoteProps": "consistent",
@@ -144,6 +145,14 @@
     "tabWidth": 2,
     "trailingComma": "es5",
     "useTabs": false
+  },
+  "codegenConfig": {
+    "name": "KhipuSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.khipu"
+    }
   },
   "react-native-builder-bob": {
     "source": "src",

@@ -1,30 +1,24 @@
-# Rodea un bug de React Native en el manejo de pods estaticos que consumen
-# paquetes SPM.
+# Works around a React Native bug in how static pods consuming SPM packages
+# are handled.
 #
-# scripts/cocoapods/spm.rb tiene DOS caminos, y solo uno necesita correccion:
+# scripts/cocoapods/spm.rb has TWO paths and only one needs fixing:
 #
-#   1. Si el pod es libreria estatica, aplana su build dir para evitar module
-#      maps duplicados, fijando en el target
-#      CONFIGURATION_BUILD_DIR = ${PODS_CONFIGURATION_BUILD_DIR}. Despues intenta
-#      reescribir la referencia al modulemap en los xcconfig agregados con
+#   1. For a static-library pod it flattens the build dir to avoid duplicate
+#      module maps, then rewrites the modulemap reference in the added xcconfigs
+#      with a gsub on "${PODS_CONFIGURATION_BUILD_DIR}/#{pod_name}/#{pod_name}.modulemap".
+#      But CocoaPods names the modulemap after the MODULE and the directory
+#      after the POD: for us "react_native_khipu" vs "react-native-khipu". The
+#      gsub never matches, the rewrite is a silent no-op, and the build fails
+#      with "module map file ... not found". Affects any pod with a hyphen.
 #
-#        gsub("${PODS_CONFIGURATION_BUILD_DIR}/#{pod_name}/#{pod_name}.modulemap", ...)
+#   2. For a non-static pod nothing is flattened and the xcconfig path is
+#      already correct.
 #
-#      Pero CocoaPods nombra el modulemap con el MODULE name y el directorio con
-#      el POD name. Para nosotros son "react_native_khipu" y
-#      "react-native-khipu": el gsub nunca calza, la reescritura queda en un
-#      no-op silencioso, y el build falla con "module map file ... not found".
-#      Afecta a cualquier pod con guion en el nombre.
+# So this function only rewrites pods that were actually flattened. Rewriting in
+# case 2 would point at a file that does not exist and BREAK a working build --
+# verified on React Native 0.75 and 0.85, which take the second path.
 #
-#   2. Si el pod NO es estatico, no aplana nada y solo agrega search paths. El
-#      path del modulemap en los xcconfig ya es correcto.
-#
-# Por eso esta funcion solo reescribe los pods que fueron efectivamente
-# aplanados. Reescribir en el caso 2 apuntaria a un archivo que no existe y
-# ROMPERIA un build que funcionaba -- verificado en React Native 0.75 y 0.85,
-# donde spm.rb toma el segundo camino.
-#
-# Uso, en el Podfile de la app:
+# Usage, in the app Podfile:
 #
 #   require File.join(
 #     File.dirname(`node --print "require.resolve('react-native-khipu/package.json')"`),
@@ -36,14 +30,13 @@
 #     khipu_fix_spm_modulemaps(installer)
 #   end
 #
-# El orden importa: react_native_post_install es quien corre la reescritura
-# rota, asi que la correccion tiene que ir despues.
+# Order matters: react_native_post_install runs the broken rewrite, so the fix
+# must come after.
 #
-# Retirar cuando el arreglo este upstream y el piso de React Native que
-# soportemos lo incluya.
+# Remove once the fix is upstream and inside our supported React Native floor.
 
-# Nombres de modulo de los pods que spm.rb aplano en esta instalacion. Un pod
-# aplanado se reconoce porque su target quedo con
+# Module names of the pods spm.rb flattened in this install. A flattened pod is
+# recognised by its target having
 # CONFIGURATION_BUILD_DIR = ${PODS_CONFIGURATION_BUILD_DIR}.
 def khipu_flattened_module_names(installer)
   project = installer.pods_project

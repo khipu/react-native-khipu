@@ -1,74 +1,40 @@
-import { NativeModules, Platform } from 'react-native';
+import Khipu from './NativeKhipu';
+import type {
+  KhipuColors,
+  KhipuEvent,
+  KhipuOptions as SpecKhipuOptions,
+  KhipuResult,
+  StartOperationOptions as SpecStartOperationOptions,
+} from './NativeKhipu';
 
-const LINKING_ERROR =
-  `The package 'react-native-khipu' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-  '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo Go\n';
+/**
+ * Public options type. Same as the codegen spec except `theme`, which keeps its
+ * literal union here: the spec must declare it `string` so RN 0.75.5's ObjC++
+ * generator does not abort `pod install`. This is what the package exports, so
+ * merchants keep autocompletion and compile-time checking.
+ *
+ * `src/__tests__/key-contract.test.ts` asserts both declarations stay in sync.
+ */
+export type KhipuOptions = Omit<SpecKhipuOptions, 'theme'> & {
+  theme?: 'light' | 'dark' | 'system';
+};
 
-const Khipu = NativeModules.Khipu
-  ? NativeModules.Khipu
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+/**
+ * Same reason: without this, `startOperation()` would still take the spec's
+ * `KhipuOptions`, so the union would be exported but out of reach where it is
+ * actually used.
+ */
+export type StartOperationOptions = Omit<
+  SpecStartOperationOptions,
+  'options'
+> & {
+  options?: KhipuOptions;
+};
+
+export type { KhipuColors, KhipuEvent, KhipuResult };
 
 export function startOperation(
   options: StartOperationOptions
 ): Promise<KhipuResult> {
   return Khipu.startOperation(options);
-}
-
-export interface StartOperationOptions {
-  operationId: string;
-  options: KhipuOptions;
-}
-
-export interface KhipuOptions {
-  locale: string | undefined;
-  title: string | undefined;
-  titleImageUrl: string | undefined;
-  skipExitPage: boolean | undefined;
-  skipExitSuccessPage: boolean | undefined;
-  showFooter: boolean | undefined;
-  showMerchantLogo: boolean | undefined;
-  showPaymentDetails: boolean | undefined;
-  theme: 'light' | 'dark' | 'system' | undefined;
-  colors: KhipuColors | undefined;
-}
-
-export interface KhipuColors {
-  lightBackground: string | undefined;
-  lightOnBackground: string | undefined;
-  lightPrimary: string | undefined;
-  lightOnPrimary: string | undefined;
-  lightTopBarContainer: string | undefined;
-  lightOnTopBarContainer: string | undefined;
-  darkBackground: string | undefined;
-  darkOnBackground: string | undefined;
-  darkPrimary: string | undefined;
-  darkOnPrimary: string | undefined;
-  darkTopBarContainer: string | undefined;
-  darkOnTopBarContainer: string | undefined;
-}
-
-export interface KhipuResult {
-  operationId: string;
-  exitTitle: string;
-  exitMessage: string;
-  exitUrl: string | undefined;
-  result: 'OK' | 'ERROR' | 'WARNING' | 'CONTINUE';
-  failureReason: string | undefined;
-  continueUrl: string | undefined;
-  events: KhipuEvent[];
-}
-
-export interface KhipuEvent {
-  name: string;
-  timestamp: string;
-  type: string;
 }
