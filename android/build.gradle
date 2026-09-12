@@ -135,7 +135,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  // 2.28.4 o mas nuevo es obligatorio. Hasta 2.28.0 un mensaje de socket que no se
+  // 2.28.5 o mas nuevo es obligatorio. Hasta 2.28.0 un mensaje de socket que no se
   // pudiera deserializar explotaba en el hilo del socket SIN try/catch y mataba el
   // proceso de la app del comercio. El guard llego en 2.28.1 (IKW-1232), 2.28.3
   // incluyo OPERATION_WARNING entre los terminales (IKW-1237), y 2.28.4 hace que un
@@ -143,7 +143,24 @@ dependencies {
   // sola, con result="ERROR" y failureReason=null, en vez de dejar al pagador
   // varado (IKW-1240). Verificado en el AAR publicado: runGuarded nombra
   // returnToApp, que no estaba en 2.28.3.
-  implementation 'com.khipu:khipu-client-android:2.28.4'
+  //
+  // 2.28.5 cierra IKW-1247, que es el peor de la serie para nosotros: KhipuCookieJar
+  // guardaba las cookies en un HashSet sin sincronizar, y OkHttp lo llama desde varios
+  // hilos del Dispatcher a la vez. El ConcurrentModificationException corre en un hilo
+  // de fondo y NO esta atrapado, asi que mata el proceso. Cuando el proceso muere no
+  // hay callback ni excepcion: la promesa no resuelve NI rechaza, desaparece. Es el
+  // unico modo de falla conocido donde el puente no puede devolver nada, porque no
+  // queda proceso donde correr el reject.
+  // Verificado en el AAR publicado, con control diferencial contra 2.28.4:
+  //   javap -p com/khipu/client/socket/KhipuCookieJar.class
+  //     2.28.5: public synchronized void saveFromResponse(...)  / synchronized loadForRequest
+  //     2.28.4: public void saveFromResponse(...)               / sin synchronized
+  //   y en las DOS versiones persistToDisk y saveCookie siguen en `private final`,
+  //   que es el control positivo: el chequeo no esta marcando todo como sincronizado.
+  // OJO con el marcador intuitivo: contar `monitorenter` da 0 en la version ARREGLADA
+  // y seria un falso negativo. @Synchronized a nivel de metodo pone ACC_SYNCHRONIZED
+  // en el descriptor, no emite esa instruccion.
+  implementation 'com.khipu:khipu-client-android:2.28.5'
 
   // Test-only: never reaches the AAR merchants consume.
   testImplementation "junit:junit:4.13.2"
