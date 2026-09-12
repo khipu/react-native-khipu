@@ -108,6 +108,17 @@ For Chile, these are the ones:
 
 The iOS equivalent is `LSApplicationQueriesSchemes`, described below.
 
+### Location permissions appear in your merged manifest
+
+You do not declare these, and you do not request them: the AAR declares them and the manifest
+merger injects them into your app, so they show up in your merged manifest without you adding
+anything. Nothing is requested at startup — the permission screen only appears if the flow reaches
+a `GEOLOCATION_REQUEST`, the payer authorizes it explicitly, and **denying it does not block the
+payment**.
+
+The full behaviour is documented at
+[Permissions Declared by the SDK](https://docs.khipu.com/en/payment-solutions/instant-payments/khipu-client-android#permissions-declared-by-the-sdk).
+
 ### Release builds
 
 If your project uses proguard with an aggressive configuration, add these rules to
