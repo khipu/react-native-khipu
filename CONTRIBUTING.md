@@ -41,6 +41,16 @@ To run the example app on Android:
 yarn example android
 ```
 
+The iOS example installs CocoaPods through Bundler, with the Ruby version pinned in `.ruby-version` (use [rbenv](https://github.com/rbenv/rbenv) or another manager that reads it). Install the pods before the first run, and again whenever native dependencies change:
+
+```sh
+cd example
+bundle install
+cd ios
+bundle exec pod install
+cd ../..
+```
+
 To run the example app on iOS:
 
 ```sh
