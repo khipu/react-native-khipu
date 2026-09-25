@@ -1,5 +1,3 @@
-source 'https://github.com/CocoaPods/Specs.git'
-
 # OJO: un comercio usa la forma con require.resolve que documenta el README,
 # porque su copia del plugin vive en node_modules. Aca no sirve: en este repo la
 # libreria ES la raiz del workspace y no hay node_modules/react-native-khipu que
