@@ -152,8 +152,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cocoapods-
 
+      # Corre aunque la cache de Pods haya acertado: pod install tambien genera
+      # el codegen en example/ios/build/generated, que no esta en la cache, y
+      # sin el xcodebuild falla con "Build input file cannot be found". La
+      # cache solo acelera la instalacion.
       - name: Install cocoapods
-        if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
+        if: env.turbo_cache_hit != 1
         run: |
           cd example/ios
           pod install
