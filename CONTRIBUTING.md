@@ -107,6 +107,12 @@ To publish new versions, run the following:
 yarn release
 ```
 
+The version bump is recommended from the commits since the last tag. Only `feat`, `fix`, `perf`, `revert` and breaking changes count; `chore`, `docs`, `style`, `refactor`, `test`, `build` and `ci` don't. If no commit since the last release counts (an SDK bump committed as `chore:`, for example), release-it stops with "No new version to release". Pass the increment explicitly in that case:
+
+```sh
+yarn release patch
+```
+
 ### Scripts
 
 The `package.json` file contains various scripts for common tasks:
