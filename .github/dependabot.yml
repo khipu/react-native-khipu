@@ -30,6 +30,10 @@ updates:
       - dependency-name: react
       - dependency-name: "@react-native/*"
       - dependency-name: "@react-native-community/*"
+      # React Native's Babel preset is on Babel 7 (@react-native/babel-preset 0.87.1 depends
+      # on @babel/core ^7.25.2), so a Babel major moves with the React Native template.
+      - dependency-name: "@babel/*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Majors stay out of the group and arrive one per pull request. They are where the
       # Node floor moves: release-it 21 and commitlint 21 both dropped Node 20.
