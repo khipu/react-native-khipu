@@ -9468,12 +9468,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^3.0.3":
-  version: 3.9.6
-  resolution: "prettier@npm:3.9.6"
+"prettier@npm:^3.9.8":
+  version: 3.9.8
+  resolution: "prettier@npm:3.9.8"
   bin:
     prettier: bin/prettier.cjs
-  checksum: 3fb6a3b6462b05afb825697a3fdcdd9bd1480c11d10d655b7ddbcaf2560beb695caffbe155b5020466005aa06bff74a61ba9c16e602bff849331b62f5db26cdf
+  checksum: b9728106824ec6f36bf34533252b213f417b724b67947f97f77558c1edfa3e626fb813dfef306fca715e34f349f3d397dfd97fc02dcc50a10a06203211d2294f
   languageName: node
   linkType: hard
 
@@ -9744,7 +9744,7 @@ __metadata:
     eslint-config-prettier: ^10.1.8
     eslint-plugin-prettier: ^5.0.1
     jest: ^29.7.0
-    prettier: ^3.0.3
+    prettier: ^3.9.8
     react: 19.2.3
     react-native: 0.87.1
     react-native-builder-bob: ^0.43.1
