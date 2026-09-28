@@ -137,8 +137,8 @@ If your project uses proguard with an aggressive configuration, add these rules 
 ### 1. Configure your Podfile
 
 Since version 2.15.0 the iOS SDK is resolved with Swift Package Manager instead of CocoaPods,
-because the CocoaPods trunk stopped accepting new versions on December 2nd, 2026. Add this at the
-top of your `ios/Podfile`:
+because the CocoaPods trunk becomes read-only on December 2, 2026. Add this at the top of your
+`ios/Podfile`:
 
 ```ruby
 require File.join(
