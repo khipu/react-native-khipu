@@ -87,6 +87,10 @@ We follow the [conventional commits specification](https://www.conventionalcommi
 - `test`: adding or updating tests, e.g. add integration tests using detox.
 - `chore`: tooling changes, e.g. change CI config.
 
+Bumping a native SDK (`khipu-client-android` or `KhipuClientIOS`) is a `fix`, not a `chore`: `fix(android): move to khipu-client-android 2.28.5` or `fix(ios): move to KhipuClientIOS 2.17.1`. It changes what merchants ship, so it has to bump the version and show up in the changelog, and `chore` does neither. The other Khipu bridges (Cordova, Capacitor, Flutter) use the same convention.
+
+A breaking change goes as `feat!:` or `fix!:`, or with a `BREAKING CHANGE:` footer; either one produces a major release.
+
 Our pre-commit hooks verify that your commit message matches this format when committing.
 
 ### Linting and tests
