@@ -34,6 +34,14 @@ updates:
       # on @babel/core ^7.25.2), so a Babel major moves with the React Native template.
       - dependency-name: "@babel/*"
         update-types: ["version-update:semver-major"]
+      # @react-native/eslint-config 0.87.1 declares eslint ^8.0.0 || ^9.0.0, so an ESLint
+      # major waits until the React Native config accepts it (ESLint 10 was #38).
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      # TypeScript 7 is the native rewrite; how it fits codegen, @typescript-eslint and bob
+      # on React Native 0.87 is not verified yet (#36), so a major is its own investigation.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       # Majors stay out of the group and arrive one per pull request. They are where the
       # Node floor moves: release-it 21 and commitlint 21 both dropped Node 20.
