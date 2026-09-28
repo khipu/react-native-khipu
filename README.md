@@ -178,6 +178,19 @@ Xcode 26.
 > `use_frameworks! :linkage => :dynamic` to your `Podfile`. Both linkage modes are verified on
 > both Xcode versions.
 
+### Xcode 27 needs React Native 0.76 or newer
+
+Xcode 27 treats any iOS deployment target below **15.0** as a build error, not a warning. React
+Native sets that floor itself: it is 15.1 since React Native 0.76, and 13.4 in 0.74 and 0.75.
+
+| React Native | Xcode 27 |
+| --- | --- |
+| 0.76 and newer | Builds. The SDK comes through Swift Package Manager, and Xcode raises its package to 15.0 on its own. Measured on 0.87.1. |
+| 0.74 and 0.75 | Does not build, **with or without this plugin**: React Native's own pods are at 13.4. Measured on 0.74.7 (the build stops before compiling anything); 0.75 has the same floor. |
+
+Apple requires Xcode 26 for App Store uploads today; Xcode 27 is not required yet. Measured on
+Xcode 27.0 (27A266a).
+
 ### Known React Native build issues on recent Xcode 26 releases
 
 Some React Native versions do not build with recent Xcode 26 releases — **with or without this
@@ -300,9 +313,14 @@ these URL schemes. **This goes in your app** — having them in our example is n
 ### If you are on React Native older than 0.75
 
 `spm_dependency` does not exist before 0.75, so the plugin falls back to CocoaPods automatically
-and you do not need the helper from step 1. The trade-off is that the SDK stays pinned at
-`KhipuClientIOS 2.16.5`, the last version published to the CocoaPods trunk. To receive newer SDK
-versions you need to upgrade React Native.
+and you do not need the helper from step 1. It resolves the same `KhipuClientIOS` version the
+plugin pins, from the CocoaPods trunk.
+
+That path has an end date. The CocoaPods trunk becomes read-only on **December 2, 2026**: SDK
+versions released after that will only be available through Swift Package Manager, so on
+React Native 0.74 you would stay on the last one published to the trunk. And React Native 0.74
+does not build on Xcode 27 (see [Xcode 27 needs React Native 0.76 or newer](#xcode-27-needs-react-native-076-or-newer)).
+To keep receiving SDK updates, upgrade React Native.
 
 
 ## Locale
