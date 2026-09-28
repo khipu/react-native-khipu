@@ -68,7 +68,7 @@ android {
   sourceSets.main.java.srcDirs += isNewArchitectureEnabled() ? ['src/newarch/java'] : ['src/oldarch/java']
 
   if (supportsNamespace()) {
-    namespace "com.khipu"
+    namespace = "com.khipu"
 
     sourceSets {
       main {

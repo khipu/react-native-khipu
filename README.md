@@ -55,7 +55,7 @@ buildscript {
 
 allprojects {
     repositories {
-        maven { url 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
+        maven { url = 'https://dev.khipu.com/nexus/content/repositories/khenshin' }
     }
 }
 ```
