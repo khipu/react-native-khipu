@@ -136,8 +136,13 @@ its own manifest.
 
 ### Release builds
 
-If your project uses proguard with an aggressive configuration, add these rules to
-`proguard-rules.pro` so the release APK keeps what the SDK needs:
+Since 4.0.2, which ships Android SDK 2.28.7, the SDK carries its own R8 rules and R8 applies them
+to your release build. There is nothing to add to `proguard-rules.pro`.
+
+On 4.0.1 or older, if your release build runs R8 (`enableProguardInReleaseBuilds = true` in
+`android/app/build.gradle`), add these rules to `android/app/proguard-rules.pro`. Without them the
+APK builds, but R8 strips the SDK's protocol classes and every payment ends in `ERROR` right after
+it starts:
 
 ```
 -keep public class com.khipu.client.**{

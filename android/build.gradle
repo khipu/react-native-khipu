@@ -167,7 +167,14 @@ dependencies {
   // ACCESS_NETWORK_STATE, que llegaba al manifest del comercio por la telemetría de
   // ML Kit. Ni el SDK ni este puente lo usan; una app que consulte ConnectivityManager
   // tiene que declararlo ella misma.
-  implementation 'com.khipu:khipu-client-android:2.28.6'
+  //
+  // 2.28.7 (IKW-1266) trae sus reglas de R8 en el AAR; hasta la 2.28.6 el proguard.txt venía
+  // vacío. Medido en un release del example con R8 y sin reglas de Khipu en la app: con la
+  // 2.28.6, R8 elimina o renombra las clases de com.khipu.khenshin.protocol y el pago resuelve
+  // ERROR a los pocos segundos, sin eventos; con la 2.28.7 las 95 clases quedan y el pago llega
+  // a OK. La otra falla que corrige, asJson() con claves renombradas, no nos alcanza:
+  // KhipuModuleImpl arma el resultado con los getters y claves fijas.
+  implementation 'com.khipu:khipu-client-android:2.28.7'
 
   // Test-only: never reaches the AAR merchants consume.
   testImplementation "junit:junit:4.13.2"
