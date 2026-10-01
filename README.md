@@ -119,6 +119,21 @@ payment**.
 The full behaviour is documented at
 [Permissions Declared by the SDK](https://docs.khipu.com/en/payment-solutions/instant-payments/khipu-client-android#permissions-declared-by-the-sdk).
 
+### `ACCESS_NETWORK_STATE` is no longer in your merged manifest
+
+Since 4.0.1, which ships Android SDK 2.28.6, the SDK reads QR codes with ZXing instead of ML Kit.
+ML Kit's telemetry used to bring `ACCESS_NETWORK_STATE` into your merged manifest, and it no
+longer does. Neither the SDK nor this module uses it, but if your app or one of its libraries
+checks the network state without declaring it, that call throws `SecurityException`. Declare it in
+`android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
+
+If you use `@react-native-community/netinfo` there is nothing to do: it declares the permission in
+its own manifest.
+
 ### Release builds
 
 If your project uses proguard with an aggressive configuration, add these rules to
