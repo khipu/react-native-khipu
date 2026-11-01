@@ -3523,6 +3523,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sindresorhus/merge-streams@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "@sindresorhus/merge-streams@npm:4.0.0"
+  checksum: 5759d31dfd822999bbe3ddcf72d4b15dc3d99ea51dd5b3210888f3348234eaff0f44bc999bef6b3c328daeb34e862a63b2c4abe5590acec541f93bc6fa016c9d
+  languageName: node
+  linkType: hard
+
 "@sinonjs/commons@npm:^3.0.0, @sinonjs/commons@npm:^3.0.1":
   version: 3.0.1
   resolution: "@sinonjs/commons@npm:3.0.1"
@@ -5630,17 +5637,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"del-cli@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "del-cli@npm:7.0.0"
+"del-cli@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "del-cli@npm:8.0.1"
   dependencies:
-    del: ^8.0.1
-    meow: ^14.0.0
+    del: ^9.0.1
+    meow: ^14.1.0
     presentable-error: ^0.0.1
   bin:
-    del: cli.js
+    del: del.js
     del-cli: cli.js
-  checksum: 3554fe1f2a519a43b69d6b671eb60ab354a52de081395c2321a1cca5ca860f6a7cc1e7c3a04b23f63c4929897ef58edabf052da885232ad93f879824af148770
+  checksum: 4a6ca2e9ed16915e7b28f0f545b08f2d078654a4d5abe97a9ea7196d0eb604a81f468427274c0e3d82dcff3fceeae4ccb268662f42d42ccf858002bbc1b3e88e
   languageName: node
   linkType: hard
 
@@ -5656,6 +5663,21 @@ __metadata:
     presentable-error: ^0.0.1
     slash: ^5.1.0
   checksum: 53ed4a379a68c90e7d6d3bcce09c49229e77de9a946d0a5fc25f45b16c950cb8665986b7d0d0423416c03bfd43e0f31e528c5a19c558fe47449be9d6fae7f846
+  languageName: node
+  linkType: hard
+
+"del@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "del@npm:9.0.1"
+  dependencies:
+    globby: ^16.2.4
+    is-glob: ^4.0.3
+    is-path-cwd: ^4.0.1
+    is-path-inside: ^4.0.0
+    p-map: ^7.0.8
+    presentable-error: ^0.0.1
+    slash: ^5.1.0
+  checksum: 96b2eaaa979686cb52befa1224c3a4f779d398e425b6d86456d0d7d213591c91c52708957c15d51badbd0ecc4001921cd3956e282eaa27be7ab580931069d68d
   languageName: node
   linkType: hard
 
@@ -7025,6 +7047,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globby@npm:^16.2.4":
+  version: 16.2.4
+  resolution: "globby@npm:16.2.4"
+  dependencies:
+    "@sindresorhus/merge-streams": ^4.0.0
+    fast-glob: ^3.3.3
+    ignore: ^7.0.5
+    is-path-inside: ^4.0.0
+    micromatch: ^4.0.8
+    slash: ^5.1.0
+    unicorn-magic: ^0.4.0
+  checksum: a759acea5aaf1a64647b285913b4303bd0870a22d8dc9a67f33e8a176c9bb9248f12420f3773968548f135bdebfb4eb6425df06da364da35903d404a1514a16b
+  languageName: node
+  linkType: hard
+
 "gopd@npm:^1.0.1, gopd@npm:^1.2.0":
   version: 1.2.0
   resolution: "gopd@npm:1.2.0"
@@ -7571,6 +7608,13 @@ __metadata:
   version: 3.0.0
   resolution: "is-path-cwd@npm:3.0.0"
   checksum: bc34d13b6a03dfca4a3ab6a8a5ba78ae4b24f4f1db4b2b031d2760c60d0913bd16a4b980dcb4e590adfc906649d5f5132684079a3972bd219da49deebb9adea8
+  languageName: node
+  linkType: hard
+
+"is-path-cwd@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "is-path-cwd@npm:4.0.1"
+  checksum: 134f3cc8a6fda4cbc4301c8c178a68de92f0f4208d78fc3e2a0e4ffce9087f0ed14b5f6bcc4ba7c6a8c77f814e7a374ae897d85da7b00f8c95b3d0a4a0b82ac7
   languageName: node
   linkType: hard
 
@@ -8854,7 +8898,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"meow@npm:^14.0.0":
+"meow@npm:^14.1.0":
   version: 14.1.0
   resolution: "meow@npm:14.1.0"
   checksum: 90c38e680e9ee297023953f1e2169363aa43cc269e8db1a6d1eac56fc3e392a625c5b7c79147b29d13188ad1a9dbfde42737c90f5bcc986d82ae4945d5dd6f1d
@@ -9719,6 +9763,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-map@npm:^7.0.8":
+  version: 7.1.1
+  resolution: "p-map@npm:7.1.1"
+  checksum: c1f3b4081dc1a94320ab2bbf0bfeefef1839f35ffa229bf781c25a792a93c60be6e1b9c92c748365a1799ecf6e2827704fd5f08caf75463c5144c2e9a5c4bcc3
+  languageName: node
+  linkType: hard
+
 "p-try@npm:^2.0.0":
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
@@ -10261,7 +10312,7 @@ __metadata:
     "@types/jest": ^30.0.0
     "@types/react": ^19.2.0
     commitlint: ^21.2.3
-    del-cli: ^7.0.0
+    del-cli: ^8.0.1
     eslint: ^9.39.5
     eslint-config-prettier: ^10.1.8
     eslint-plugin-prettier: ^5.0.1
@@ -11608,6 +11659,13 @@ __metadata:
   version: 0.3.0
   resolution: "unicorn-magic@npm:0.3.0"
   checksum: bdd7d7c522f9456f32a0b77af23f8854f9a7db846088c3868ec213f9550683ab6a2bdf3803577eacbafddb4e06900974385841ccb75338d17346ccef45f9cb01
+  languageName: node
+  linkType: hard
+
+"unicorn-magic@npm:^0.4.0":
+  version: 0.4.1
+  resolution: "unicorn-magic@npm:0.4.1"
+  checksum: 445bcbe77d17ae0c823312e9ae5158037ebef9de1fd72796520de1236475ee887519f82f9b061fc6c98a11a5b877f1572168d8475df52bb46c1397f4882956ce
   languageName: node
   linkType: hard
 
